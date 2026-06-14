@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Jobkit</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%92%BC</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand">
+  <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect x="2" y="2" width="20" height="20" rx="6" fill="#6d4aff"/>
+    <path d="M7 12.5 L10.5 16 L17 9" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+  <span>jobkit</span>
+</div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="pipeline">Pipeline</button>
+    <button class="tab" data-tab="companies">Companies</button>
+    <button class="tab" data-tab="match">Check Match</button>
+    <button class="tab" data-tab="tailor">Tailor</button>
+    <button class="tab" data-tab="prep">Prep</button>
+    <button class="tab" data-tab="log">Log</button>
+    <button class="tab" data-tab="intake">Intake</button>
+  </nav>
+  <div class="status-dot" id="status-dot" title="ready"></div>
+</header>
+
+<main>
+  <!-- PIPELINE -->
+  <section class="panel active" id="panel-pipeline">
+    <div class="panel-header"><div class="panel-title">Pipeline</div><button class="ghost btn-sm" id="pipeline-refresh">Refresh</button></div>
+    <div class="rendered" id="pipeline-view">Loading…</div>
+  </section>
+
+  <!-- CHECK MATCH -->
+  <section class="panel" id="panel-match">
+    <div class="panel-header"><div class="panel-title">Check Match — Should I apply?</div></div>
+    <p class="hint">Paste a job description (or URL) from LinkedIn or anywhere. Get an honest APPLY / MAYBE / SKIP verdict and a match score against your profile — no resume built. If it's a yes, send it straight to Tailor.</p>
+    <label>Job description (text or URL)</label>
+    <textarea id="match-jd" rows="12" placeholder="Paste JD or URL…"></textarea>
+    <div class="row">
+      <button class="primary" id="match-run">Check match</button>
+    </div>
+    <div class="progress-bar" id="match-progress" hidden>
+      <div class="progress-spinner"></div>
+      <span id="match-progress-text">Analysing fit…</span>
+    </div>
+    <div class="output-block" id="match-out-wrap" hidden>
+      <div class="output-header">
+        <span id="match-verdict" class="verdict-badge" hidden></span>
+        <span id="match-score" class="ats-badge" hidden></span>
+        <span class="output-label"></span>
+        <button class="ghost btn-sm" id="match-to-tailor" hidden>Tailor this →</button>
+      </div>
+      <div class="rendered" id="match-out"></div>
+    </div>
+  </section>
+
+  <!-- TAILOR -->
+  <section class="panel" id="panel-tailor">
+    <div class="panel-header"><div class="panel-title">Tailor</div></div>
+    <p class="hint">Paste the JD or a URL. Produces a quality-gated, ATS-checked resume.</p>
+    <label>Job description (text or URL)</label>
+    <textarea id="tailor-jd" rows="12" placeholder="Paste JD or URL…"></textarea>
+    <label>Known facts <span style="opacity:.6;font-weight:400">— things you know that aren't in the bank yet (optional)</span></label>
+    <textarea id="tailor-facts" rows="4" placeholder="e.g. Owned vendor budget of €X; ran on-call rotation for 8 services… One fact per line. Treated as true and offered to the bank afterwards."></textarea>
+    <div class="row">
+      <button class="primary" id="tailor-run">Run /tailor</button>
+      <label class="inline-check"><input type="checkbox" id="tailor-cover-letter" /> Cover letter</label>
+      <label class="inline-check"><input type="checkbox" id="tailor-research" /> Research company</label>
+    </div>
+    <div class="progress-bar" id="tailor-progress" hidden>
+      <div class="progress-spinner"></div>
+      <span id="tailor-progress-text">Analysing JD…</span>
+    </div>
+    <div class="output-block" id="tailor-out-wrap" hidden>
+      <div class="output-header">
+        <span class="output-label">Output</span>
+        <span class="ats-badge" id="ats-badge" hidden></span>
+        <button class="ghost btn-sm" id="diff-toggle" hidden>Show changes</button>
+        <button class="ghost btn-sm" data-copy="tailor-out-raw">Copy</button>
+        <button class="ghost btn-sm" data-clear="tailor">Clear</button>
+      </div>
+
+      <div id="diff-callout" hidden class="diff-callout"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="section-sublabel" style="margin:0">Resume preview</div>
+        <div>
+          <button class="ghost btn-sm" id="resume-edit-btn" hidden>Edit</button>
+          <button class="primary btn-sm" id="resume-apply-btn" hidden>Apply</button>
+          <button class="ghost btn-sm" id="resume-cancel-edit-btn" hidden>Cancel</button>
+        </div>
+      </div>
+      <p class="hint" id="resume-hint" style="margin:0 0 8px">Click any bullet to edit inline. Use ⚠ Flag to mark invented content — or use Edit to rewrite anything.</p>
+      <div class="rendered" id="resume-preview"></div>
+      <textarea id="resume-md-editor" rows="30" hidden style="width:100%;font-family:var(--font-mono,monospace);font-size:13px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;box-sizing:border-box;resize:vertical;line-height:1.6;"></textarea>
+
+      <details class="analysis-details">
+        <summary>Analysis — ATS check · quality gates · gaps</summary>
+        <div class="rendered" id="tailor-out"></div>
+      </details>
+
+      <textarea id="tailor-out-raw" hidden></textarea>
+
+      <div class="row" style="margin-top:14px" id="tailor-actions" hidden>
+        <a class="btn-dl" id="tailor-dl-docx" hidden>↓ Resume (.docx)</a>
+        <a class="btn-dl" id="tailor-dl-html" hidden>↓ Resume (print → PDF)</a>
+        <a class="btn-dl" id="tailor-dl-cover" hidden>↓ Cover letter</a>
+        <button class="ghost" id="tailor-mark-sent" hidden>Mark as sent</button>
+      </div>
+      <p class="hint" id="tailor-pdf-hint" hidden style="margin-top:6px">
+        Open the HTML file in Chrome → Cmd/Ctrl+P → Save as PDF for an ATS-safe PDF.
+      </p>
+    </div>
+  </section>
+
+  <!-- PREP -->
+  <section class="panel" id="panel-prep">
+    <div class="panel-header"><div class="panel-title">Prep</div></div>
+    <label>Company</label>
+    <select id="prep-company"></select>
+    <label>Round / focus (e.g. "system design", "hiring manager round")</label>
+    <input id="prep-round" type="text" />
+    <div class="row"><button class="primary" id="prep-run">Run /prep</button></div>
+    <div class="output-block" id="prep-out-wrap" hidden>
+      <div class="row"><h3>Output</h3>
+        <button class="ghost" data-copy="prep-out-raw">Copy</button>
+        <button class="ghost" data-clear="prep">Clear</button>
+        <a class="btn-dl" id="prep-dl" hidden>↓ Prep notes (.md)</a>
+      </div>
+      <div class="rendered" id="prep-out"></div>
+      <textarea id="prep-out-raw" hidden></textarea>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section class="panel" id="panel-log">
+    <div class="panel-header"><div class="panel-title">Log</div></div>
+    <p class="hint">Pick an existing company or type a new name; the file will be created if missing.</p>
+    <label>Company (existing)</label>
+    <select id="log-company-existing"><option value="">— pick —</option></select>
+    <label>Or new company name (lowercase, hyphens)</label>
+    <input id="log-company-new" type="text" placeholder="e.g. trade-republic" />
+    <label>Note</label>
+    <textarea id="log-note" rows="4" placeholder="What happened and what's next."></textarea>
+    <label>Stage update (optional)</label>
+    <input id="log-stage" type="text" placeholder="e.g. Phone screen, Final round, Offer, Rejected" />
+    <div class="row">
+      <button class="primary" id="log-run-direct">Log</button>
+      <button class="ghost" id="log-run-ai">AI log</button>
+    </div>
+    <div class="output-block" id="log-out-wrap" hidden>
+      <div class="row"><h3>Result</h3><button class="ghost" data-clear="log">Clear</button></div>
+      <div class="rendered" id="log-out"></div>
+    </div>
+  </section>
+
+  <!-- INTAKE -->
+  <section class="panel" id="panel-intake">
+    <div class="panel-header"><div class="panel-title">Intake</div></div>
+    <p class="hint">Paste raw notes or a summary block. The agent routes each piece to the right company file and updates the pipeline.</p>
+    <textarea id="intake-notes" rows="14" placeholder="Paste raw notes…"></textarea>
+    <div class="row"><button class="primary" id="intake-run">Run /intake</button></div>
+    <div class="output-block" id="intake-out-wrap" hidden>
+      <div class="row"><h3>Result</h3><button class="ghost" data-clear="intake">Clear</button></div>
+      <div class="rendered" id="intake-out"></div>
+    </div>
+  </section>
+
+  <!-- COMPANIES -->
+  <section class="panel" id="panel-companies">
+    <div class="panel-header">
+      <div class="panel-title">Companies</div>
+      <button class="ghost btn-sm" id="companies-refresh">Refresh</button>
+    </div>
+
+    <div id="company-list"></div>
+
+    <div id="company-detail" hidden style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="panel-header" style="margin-bottom:16px">
+        <div class="panel-title" id="company-detail-name"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
+          <button class="ghost btn-sm" id="company-prep-btn">▶ Prep</button>
+          <button class="ghost btn-sm" id="company-edit">Edit</button>
+          <button class="primary btn-sm" id="company-save" hidden>Save</button>
+          <button class="ghost btn-sm" id="company-cancel" hidden>Cancel</button>
+          <button class="ghost btn-sm" id="company-close"
+            style="color:var(--amber);border-color:var(--amber)">Mark closed</button>
+          <button class="ghost btn-sm" id="company-delete"
+            style="color:var(--red);border-color:var(--red)">Delete</button>
+        </div>
+      </div>
+
+      <div id="company-jd-section" hidden style="margin-bottom:16px">
+        <details class="jd-details">
+          <summary>
+            <span>Job description</span>
+            <span id="company-jd-meta" class="jd-meta"></span>
+            <button class="ghost btn-sm" id="company-jd-copy" type="button" style="margin-left:auto">Copy</button>
+          </summary>
+          <div class="rendered jd-body" id="company-jd-body"></div>
+        </details>
+      </div>
+
+      <div id="company-files-section" hidden>
+        <div id="company-files-list" style="margin-bottom:16px"></div>
+      </div>
+
+      <div id="company-upload-section" style="margin-top:4px;margin-bottom:16px">
+        <button class="ghost btn-sm" id="upload-resume-toggle">↑ Upload submitted resume</button>
+        <div id="upload-form" hidden style="margin-top:14px;padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="flex:1">
+              <label style="margin-top:0">File (DOCX or PDF exported from Google Docs)</label>
+              <label class="file-pick-label" id="file-pick-label" for="upload-file">Choose file…</label>
+              <input type="file" id="upload-file" accept=".docx,.pdf" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" />
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:4px">
+            <div style="flex:0 0 110px">
+              <label>ATS %</label>
+              <input type="number" id="upload-ats" min="0" max="100" placeholder="92" />
+            </div>
+            <div style="flex:1">
+              <label>JD title</label>
+              <input type="text" id="upload-jd-title" placeholder="e.g. Senior Manager, Test Engineering" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="primary btn-sm" id="upload-submit-btn">Register as sent</button>
+            <button class="ghost btn-sm" id="upload-cancel-btn" style="margin-left:auto">Cancel</button>
+          </div>
+          <div id="upload-status" hidden style="margin-top:8px;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;border:1px solid var(--border)"></div>
+
+          <div id="context-review" hidden style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+            <div class="section-sublabel" style="margin-top:0">New context for achievement bank</div>
+            <p class="hint" style="margin-top:4px;margin-bottom:10px">Review what's genuinely new. Check what you want added to CLAUDE.md.</p>
+            <div id="context-bullets-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+            <div class="row" style="margin-top:0">
+              <button class="primary btn-sm" id="add-selected-context">Add checked to CLAUDE.md</button>
+              <span id="context-add-status" style="font-size:13px;color:var(--muted)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-sublabel">Notes &amp; process log</div>
+      <div class="rendered" id="company-view"></div>
+      <textarea id="company-edit-area" rows="22" hidden></textarea>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+
+# os / editor cruft
+.DS_Store
+*.log
+
+# secrets / local config (never commit)
+.env
+.env.*
+.claude/settings.local.json
+
+# personal data — kept OUT of the shared code repo (backed up separately, per-person)
+/CLAUDE.md
+/pipeline.md
+/companies/
+/output/
+/resumes/

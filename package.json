@@ -1,0 +1,14 @@
+{
+  "name": "jobkit-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dark-mode UI over the jobkit slash commands (headless Claude Code).",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "docx": "^9.7.1",
+    "express": "^4.19.2",
+    "mammoth": "^1.12.0"
+  }
+}
