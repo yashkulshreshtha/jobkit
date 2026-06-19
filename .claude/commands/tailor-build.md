@@ -12,6 +12,18 @@ Assume fit has already been confirmed. Do NOT re-run the fit verdict.
 FABRICATION GUARD: Read ## Fabrication log in CLAUDE.md. Never use flagged claims.
 For any fact not in the achievement bank, write [VERIFY: claim] instead.
 
+HARD RULES (override any desire to match the JD — breaking one is a failure):
+1. TITLE LOCK — experience job titles are fixed facts; use them exactly as in CLAUDE.md (Delivery Hero =
+   "Engineering Manager / Quality Engineering Manager"). Never invent/upgrade a title (no "Staff
+   Engineer" etc.); only the top headline TITLE LINE is role-tunable.
+2. NO RELABELLING — describe each achievement as what it actually is. The QMI is a quality-metrics /
+   reporting platform, NOT an "internal developer platform" / "Platform-as-a-Product" / "CI/CD platform".
+3. NO UMBRELLA-FROM-A-PART — I have Change Failure Rate (one DORA metric) + a Regression Reliability
+   Index; do NOT claim "DORA metrics" / "deployment frequency" unless the bank says so.
+4. NO INVENTED SCOPE — team/service/market counts come from the bank verbatim; never manufacture figures.
+5. A GAP IS REPORTED, NEVER WORN — an unmet requirement goes in the gaps list only; it appears nowhere in
+   the body via reframing, relabelling, an upgraded title, an umbrella-metric, or a borrowed buzzphrase.
+
 STEP 1 — RESEARCH (only if --research flag present)
 Web search company engineering culture. Note 2-3 signals. One paragraph only.
 
@@ -24,12 +36,18 @@ Write complete resume per the structure in CLAUDE.md. All sections.
 Do NOT print it in response prose — it is saved via RESUME_JSON and read from
 file by the UI.
 
-WORDING RULE (governs the whole draft): Map my real experience onto what the JD asks for, in MY OWN
-words. Do NOT reuse the JD's phrasing, nouns, or sentence shapes — echoing the JD reads as
-keyword-stuffing and is a failure. Address a requirement only when I have genuine matching experience
-in the base resume, the achievement bank, or companies/<slug>.md, described in my own terminology.
-Never invent experience, tools, titles, or metrics not in those sources. Unmatched requirements are
-gaps to report, never phrases to paste in.
+WORDING RULE (governs the whole draft): Write as MYSELF, in my own standard terminology. Do NOT mirror
+the JD's phrasing, nouns, sentence shapes, or branded buzzphrases. THE ONLY MIRRORING ALLOWED: a
+genuine standard INDUSTRY term for something I actually did (e.g. "CI/CD", "TDD", "test pyramid",
+"contract testing"). The JD's distinctive framing / vendor coinages / buzzphrases (e.g.
+"Platform-as-a-Product", "developer-productivity tooling", "influence rather than mandate") are NOT
+industry-standard — never adopt them. If unsure, treat the term as JD-branded and use my own words.
+Address a requirement only when I have genuine matching experience in the base resume, the achievement
+bank, or companies/<slug>.md. Unmatched requirements are gaps to report, never phrases to paste in.
+
+Before saving, run a quick HONESTY SELF-AUDIT and report PASS/FAIL: (a) every experience title matches
+CLAUDE.md; (b) every claim traces to a real source; (c) no achievement relabelled into a category it
+isn't; (d) no JD buzzphrase borrowed; (e) nothing from the gap list worn as if met. Fix before saving.
 
 STEP 4 — COVERAGE CHECK (concepts, not verbatim keywords)
 List the 8-10 must-have requirements as concepts, not the JD's exact phrases. For each, check whether

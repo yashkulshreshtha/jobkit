@@ -24,6 +24,26 @@ explicitly present in the CLAUDE.md achievement bank OR the KNOWN FACTS block ab
 [VERIFY: your intended claim] as a placeholder instead. Do not invent. A placeholder is better
 than a fabrication.
 
+HARD RULES (override any desire to match the JD — breaking one is a failure, not a near-miss):
+1. TITLE LOCK. The job titles in PROFESSIONAL EXPERIENCE are FIXED facts — use them exactly as in
+   CLAUDE.md (Delivery Hero = "Engineering Manager / Quality Engineering Manager"; MayTek = "Principal
+   Software Consultant"; Atomants = "Head of Technology"). NEVER invent, upgrade, or swap a position
+   title to fit the JD (no "Staff Engineer", "Platform EM", "Principal Engineer", etc.). Only the
+   headline TITLE LINE at the very top is role-tunable; the titles inside the experience entries are not.
+2. NO RELABELLING. Describe each achievement as what it ACTUALLY is — do not recast it as a different
+   category of thing to match the JD. The QMI is a quality-metrics / reporting platform; it is NOT an
+   "internal developer platform", "Platform-as-a-Product", "CI/CD platform", or "DevEx platform". If the
+   JD wants X and I built Y, say Y honestly. Renaming Y into X is fabrication.
+3. NO UMBRELLA CLAIMS FROM A PART. If I have one piece of a named framework, name that piece — not the
+   umbrella. I have Change Failure Rate (one DORA metric) + a Regression Reliability Index; I do NOT have
+   "DORA metrics", "deployment frequency", or "lead time" unless the bank says so.
+4. NO INVENTED SCOPE/NUMBERS. Team/service/market figures come from the bank verbatim (17 product teams,
+   ~50 services, 30+ teams, 40+ markets). Never manufacture a new figure like "5+ feature teams".
+5. A GAP IS REPORTED, NEVER WORN. A JD requirement I don't genuinely meet goes in Step 9 as a gap and
+   appears NOWHERE in the profile, competencies, bullets, or skills — not via reframing, relabelling, an
+   upgraded title, an umbrella-metric, or a borrowed buzzphrase. ATS/coverage score is never a reason to
+   wear a gap. I want to be MYSELF on the page.
+
 STEP 1 — PARSE
 Remove any flags from JD text and note which are present.
 Extract: role title, company name and slug (lowercase-hyphens, e.g. "trade-republic"),
@@ -58,13 +78,19 @@ STEP 4 — DRAFT FULL RESUME
 Write the complete tailored resume. Single-column, ATS-safe structure.
 
 WORDING RULE (governs the whole draft — read first):
-Map my real experience onto what the JD asks for, expressed in MY OWN words. Do NOT reuse the
-JD's phrasing, nouns, or sentence shapes — echoing the JD reads as keyword-stuffing to recruiters
-and is a failure, not a success. Address a JD requirement only when I have genuine matching
-experience in the base resume, the CLAUDE.md achievement bank, or companies/<slug>.md — and
-describe it in my own standard terminology. Never invent experience, tools, titles, or metrics not
-present in those sources. A requirement I can't honestly match is a gap to report (Step 9), never a
-phrase to paste in.
+Write as MYSELF. Map my real experience onto what the JD asks for in my own standard terminology.
+Do NOT mirror the JD's phrasing, nouns, sentence shapes, or branded buzzphrases — echoing the JD
+reads as keyword-stuffing and is a failure, not a success.
+THE ONLY MIRRORING ALLOWED: a term that is the genuine, standard INDUSTRY name for something I
+actually did — e.g. "CI/CD", "TDD", "test pyramid", "contract testing", "code review", "microservices".
+These are shared vocabulary, not the JD's voice, so use them freely where they fit my real work.
+A phrase that is the JD's distinctive framing, a vendor/company coinage, or a buzzphrase — e.g.
+"Platform-as-a-Product", "developer-productivity tooling", "influence rather than mandate",
+"outcomes over tasks", "Internal Developer Platform" — is NOT industry-standard; never adopt it to
+match the JD. If unsure whether a term is standard or JD-branded, treat it as JD-branded and use my
+own words. Address a JD requirement only when I have genuine matching experience in the base resume,
+the bank, or companies/<slug>.md. A requirement I can't honestly match is a gap to report (Step 9),
+never a phrase to paste in.
 
 NAME LINE: Yash Kulshreshtha, B.Tech, MSc
 CONTACT: Berlin, Germany (German Permanent Resident) · +49 163 171 0329 · yashkulshreshtha@hotmail.com · linkedin.com/in/yashkul
@@ -131,6 +157,17 @@ Action verbs: rewrite any bullet starting with: responsible for, worked on, help
 assisted, involved in, supported. Replace with strong past-tense verbs.
 2-page cap: estimate page count at 11pt Arial. If over 2 pages, trim lowest-priority
 DH bullets first, then MayTek/Atomants if still over. Note cuts made.
+
+STEP 6B — HONESTY SELF-AUDIT (do this before saving; report PASS/FAIL on each line)
+Audit the drafted resume against the HARD RULES and WORDING RULE. Report each:
+(a) TITLES — every experience title matches CLAUDE.md exactly (quote them).
+(b) TRACE — every profile claim, competency, bullet, and skill traces to a specific bank / base-CV /
+    KNOWN_FACTS line. List anything that doesn't, and DELETE it.
+(c) RELABEL — no achievement is renamed into a category it isn't (platform / framework / metric type).
+(d) MIRROR — no phrase is lifted from the JD unless it's a standard industry term; list any borrowed
+    buzzphrases and reword them.
+(e) GAP WORN — nothing from Step 9's gap list also appears as if met in the body.
+If any check FAILS, fix the draft before Step 7. Never save a resume that fails the audit.
 
 STEP 7 — SAVE AND OUTPUT STRUCTURED DATA
 Save the complete final resume as output/resume-<slug>-<YYYYMMDD>.md
