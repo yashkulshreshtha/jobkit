@@ -472,11 +472,45 @@ function updatePipelineStage(pipelineContent, name, newStage) {
   }).join('\n');
 }
 
+// Best-effort "date applied" for a company, read from its companies/<slug>.md.
+// Prefers the earliest date in the "Resumes sent" section, then any resume-sent /
+// submitted log line, then the earliest date anywhere in the file.
+function extractAppliedDate(md) {
+  const dateRe = /\b(20\d{2}-\d{2}-\d{2})\b/g;
+  const earliest = text => {
+    const ds = (text.match(dateRe) || []).sort();
+    return ds.length ? ds[0] : null;
+  };
+  const lines = md.split('\n');
+  const idx = lines.findIndex(l => /^#+\s*resumes?\s+sent/i.test(l.trim()));
+  if (idx !== -1) {
+    const section = [];
+    for (let i = idx + 1; i < lines.length && !/^#+\s/.test(lines[i]); i++) section.push(lines[i]);
+    const d = earliest(section.join('\n'));
+    if (d) return d;
+  }
+  const sentLines = lines.filter(l => /resume\s+(sent|submitted)|\bsubmitted\b|\bapplied\b/i.test(l));
+  const d2 = earliest(sentLines.join('\n'));
+  if (d2) return d2;
+  return earliest(md);
+}
+
 // --- read-only views -------------------------------------------------------
 app.get('/api/pipeline', async (req, res) => {
   try {
     const content = await fs.readFile(path.join(ROOT, 'pipeline.md'), 'utf8');
-    res.json({ content });
+    const appliedDates = {};
+    try {
+      const dir = path.join(ROOT, 'companies');
+      const files = (await fs.readdir(dir)).filter(f => f.endsWith('.md'));
+      for (const f of files) {
+        try {
+          const d = extractAppliedDate(await fs.readFile(path.join(dir, f), 'utf8'));
+          if (d) appliedDates[f.replace(/\.md$/, '')] = d;
+        } catch (_) { /* skip unreadable company file */ }
+      }
+    } catch (_) { /* no companies dir → empty map */ }
+    res.json({ content, appliedDates });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

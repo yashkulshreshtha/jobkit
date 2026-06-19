@@ -26,6 +26,7 @@ let _pipelineFooter = '';
 let _pipelineFilter = 'all';
 let _pipelineSort = 'updated';
 let _pipelineSearch = '';
+let _appliedDates = {}; // { slug: 'YYYY-MM-DD' } from company files, for CSV export
 let _activeJdText = '';
 
 function setStatus(text, cls) {
@@ -150,6 +151,7 @@ function renderPipelineView() {
         <option value="company"${_pipelineSort === 'company' ? ' selected' : ''}>Company A–Z</option>
         <option value="stage"${_pipelineSort === 'stage' ? ' selected' : ''}>Stage</option>
       </select>
+      <button id="pl-export" class="pl-export" type="button" title="Export all applications as a CSV (for AFA / records)">⭳ Export CSV</button>
     </div>
   </div>`;
 
@@ -207,6 +209,8 @@ function renderPipelineView() {
     chip.addEventListener('click', () => { _pipelineFilter = chip.dataset.filter; renderPipelineView(); }));
   const sortEl = container.querySelector('#pl-sort');
   if (sortEl) sortEl.addEventListener('change', () => { _pipelineSort = sortEl.value; renderPipelineView(); });
+  const exportEl = container.querySelector('#pl-export');
+  if (exportEl) exportEl.addEventListener('click', exportPipelineCsv);
   const searchEl = container.querySelector('#pl-search');
   if (searchEl) searchEl.addEventListener('input', () => {
     _pipelineSearch = searchEl.value;
@@ -231,9 +235,51 @@ function renderPipelineView() {
   });
 }
 
+// Export the full pipeline (all rows, ignoring the on-screen filter) as a CSV for
+// AFA / personal records. Built client-side from the already-parsed rows.
+function exportPipelineCsv() {
+  const cols = [
+    ['company',      'Company'],
+    ['role',         'Role'],
+    ['tier',         'Tier'],
+    ['stage',        'Status'],
+    ['warm contact', 'Contact'],
+    ['applied',      'Date applied'],
+    ['next action',  'Next action'],
+    ['updated',      'Last updated'],
+  ];
+  const rows = _pipelineRows || [];
+  if (!rows.length) { alert('No applications to export yet.'); return; }
+
+  const SEP = ';'; // semicolon → opens cleanly in German Excel and Google Sheets
+  const clean = v => (v == null ? '' : String(v).replace(/^—$/, '').trim());
+  const esc = v => {
+    const s = clean(v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  // real "date applied" comes from the company file; fall back to last-updated
+  const cell = (r, key) => key === 'applied'
+    ? (_appliedDates[slugify(r['company'] || '')] || r['updated'] || '')
+    : r[key];
+
+  const lines = [cols.map(c => esc(c[1])).join(SEP)];
+  rows.forEach(r => lines.push(cols.map(c => esc(cell(r, c[0]))).join(SEP)));
+  const csv = '﻿' + lines.join('\r\n'); // BOM + CRLF for Excel/umlauts
+
+  const today = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `applications-${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+
 async function loadPipeline() {
   try {
-    const { content } = await api('/api/pipeline');
+    const { content, appliedDates } = await api('/api/pipeline');
+    _appliedDates = appliedDates || {};
     renderPipeline(content);
   } catch (e) {
     document.getElementById('pipeline-view').textContent = 'Error: ' + e.message;
