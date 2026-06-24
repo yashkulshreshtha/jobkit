@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>JobKit — Your entire job search, in one place</title>
+<meta name="description" content="Triage jobs with an apply-or-skip verdict, tailor ATS-ready resumes, prep for interviews, and track every application — all in one place." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%92%BC</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+<style>
+  :root{
+    --bg1:#f6f4fe; --bg2:#eef4fc; --bg3:#f4f1fb;
+    --surface:#ffffff; --border:#e4e6f1; --text:#1d1e2c; --text2:#565a73; --muted:#8a8da6;
+    --accent:#6d4aff; --accent2:#2f7cf6; --green:#07976a; --amber:#d97706; --red:#e23145;
+    --radius:14px; --shadow:0 2px 8px rgba(30,34,70,.07),0 12px 30px rgba(30,34,70,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:linear-gradient(165deg,var(--bg1),var(--bg2) 45%,var(--bg3));background-attachment:fixed;min-height:100vh;color:var(--text);font:16px/1.6 "Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  header{display:flex;align-items:center;gap:10px;padding:22px 0}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.3px}
+  .logo{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:15px}
+  .nav-cta{margin-left:auto;font-size:14px;font-weight:600;color:var(--accent);text-decoration:none}
+
+  .hero{text-align:center;padding:54px 0 30px}
+  .pill{display:inline-block;font-size:12.5px;font-weight:600;color:var(--accent);background:rgba(109,74,255,.10);border:1px solid rgba(109,74,255,.20);padding:5px 13px;border-radius:20px;margin-bottom:22px}
+  h1{font-size:46px;line-height:1.1;font-weight:800;letter-spacing:-1.2px;margin-bottom:18px}
+  h1 .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{font-size:19px;color:var(--text2);max-width:620px;margin:0 auto 30px}
+
+  .form{display:flex;gap:10px;max-width:480px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+  .form input{flex:1;min-width:220px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;font:inherit;font-size:15px;color:var(--text);outline:none;box-shadow:var(--shadow)}
+  .form input:focus{border-color:var(--accent2)}
+  .form button{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 22px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(109,74,255,.30);transition:filter .15s,transform .15s}
+  .form button:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  .form-note{font-size:13px;color:var(--muted);margin-top:12px}
+  .form-ok{display:none;color:var(--green);font-weight:600;margin-top:14px}
+
+  .badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+  .badge{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:20px}
+  .b-green{background:rgba(7,151,106,.12);color:var(--green);border:1px solid rgba(7,151,106,.28)}
+  .b-amber{background:rgba(217,119,6,.12);color:var(--amber);border:1px solid rgba(217,119,6,.30)}
+  .b-red{background:rgba(226,49,69,.10);color:var(--red);border:1px solid rgba(226,49,69,.28)}
+
+  .section{padding:46px 0}
+  .section h2{text-align:center;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:30px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+  .card .n{width:30px;height:30px;border-radius:9px;background:rgba(109,74,255,.10);color:var(--accent);font-weight:800;display:grid;place-items:center;margin-bottom:13px}
+  .card h3{font-size:17px;font-weight:700;margin-bottom:7px;letter-spacing:-.2px}
+  .card p{font-size:14.5px;color:var(--text2)}
+
+  .feats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feat-ic{font-size:24px;line-height:1;margin-bottom:11px}
+  .strip{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+  .tick{color:var(--green);font-weight:800}
+
+  .cta2{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:40px 22px;margin:30px 0}
+  .cta2 h2{color:var(--text);font-size:26px;text-transform:none;letter-spacing:-.5px;margin-bottom:10px}
+  .cta2 p{color:var(--text2);margin-bottom:22px}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:30px 0 50px}
+  @media(max-width:680px){h1{font-size:34px}.steps,.feats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="logo">💼</span> JobKit</div>
+    <a class="nav-cta" href="#waitlist">Join the waitlist →</a>
+  </header>
+
+  <section class="hero">
+    <span class="pill">Private beta · join the waitlist</span>
+    <h1>Your entire job search,<br><span class="grad">in one place.</span></h1>
+    <p class="sub">Paste any job and get an honest apply-or-skip verdict — then tailor an ATS-ready resume, prep for the interview, and track every application. One workflow, built from your real experience.</p>
+
+    <form class="form" id="waitlist" onsubmit="return joinWaitlist(event)">
+      <input type="email" id="email" placeholder="you@email.com" required aria-label="Email" />
+      <button type="submit">Get early access</button>
+    </form>
+    <div class="form-note">No spam. We'll email you when your spot opens.</div>
+    <div class="form-ok" id="ok">✓ You're on the list — we'll be in touch.</div>
+
+    <div class="badges">
+      <span class="badge b-green">APPLY</span>
+      <span class="badge b-amber">MAYBE</span>
+      <span class="badge b-red">SKIP</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="card"><div class="n">1</div><h3>Paste the job</h3><p>Drop in any job description or link — from LinkedIn or anywhere else.</p></div>
+      <div class="card"><div class="n">2</div><h3>Get an honest read</h3><p>An APPLY / MAYBE / SKIP verdict, a match score, and the real gaps — so you don't waste time on bad fits.</p></div>
+      <div class="card"><div class="n">3</div><h3>Tailor in one click</h3><p>A keyword-matched, ATS-checked resume for that exact role — built from your real experience, never invented.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Everything your job search needs</h2>
+    <div class="feats">
+      <div class="card"><div class="feat-ic">🎯</div><h3>Apply or skip</h3><p>An honest verdict and match score for any job, so you only chase the ones worth it.</p></div>
+      <div class="card"><div class="feat-ic">✍️</div><h3>Tailored resumes</h3><p>ATS-checked, keyword-matched resumes for each role — built from your real experience.</p></div>
+      <div class="card"><div class="feat-ic">🎙️</div><h3>Interview prep</h3><p>Round-by-round prep packs: likely questions, your real gaps, and how to position.</p></div>
+      <div class="card"><div class="feat-ic">📊</div><h3>Pipeline tracker</h3><p>Every application and its stage — submitted, screening, interviewing — at a glance.</p></div>
+      <div class="card"><div class="feat-ic">🏢</div><h3>Company hub</h3><p>Notes, the original job description, and every file you've sent, organised per company.</p></div>
+      <div class="card"><div class="feat-ic">⚡</div><h3>Quick capture</h3><p>Drop in messy updates and JobKit files them to the right company automatically.</p></div>
+    </div>
+    <div class="strip">
+      <span class="pill"><span class="tick">✓</span> Honest — never invents experience</span>
+      <span class="pill"><span class="tick">✓</span> ATS-aware</span>
+      <span class="pill"><span class="tick">✓</span> Your data stays yours</span>
+    </div>
+  </section>
+
+  <section class="cta2">
+    <h2>Be first in.</h2>
+    <p>JobKit is in private beta. Join the waitlist for early access.</p>
+    <form class="form" onsubmit="return joinWaitlist(event)">
+      <input type="email" id="email2" placeholder="you@email.com" required aria-label="Email" />
+      <button type="submit">Join the waitlist</button>
+    </form>
+  </section>
+
+  <footer>© <span id="yr"></span> JobKit · Built for job seekers who'd rather apply smart than apply often.</footer>
+</div>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // TODO: set this to your waitlist endpoint.
+  // Fastest options: a Formspree form URL (https://formspree.io/f/XXXX),
+  // a Tally form, or your own Supabase edge function. Until set, submissions
+  // just show the success state without sending anywhere.
+  const WAITLIST_ENDPOINT = "";
+
+  async function joinWaitlist(e){
+    e.preventDefault();
+    const input = e.target.querySelector('input[type=email]');
+    const email = (input.value || '').trim();
+    if(!email) return false;
+    try{
+      if(WAITLIST_ENDPOINT){
+        await fetch(WAITLIST_ENDPOINT,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Accept':'application/json'},
+          body:JSON.stringify({email})
+        });
+      }
+      document.getElementById('ok').style.display='block';
+      e.target.reset();
+    }catch(err){
+      alert('Something went wrong — please try again.');
+    }
+    return false;
+  }
+</script>
+</body>
+</html>

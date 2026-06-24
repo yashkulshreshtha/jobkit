@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>JobKit — your entire job search, in one place</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+<style>
+  @page{ size:A4; margin:0 }
+  :root{
+    --accent:#6d4aff; --accent2:#2f7cf6; --text:#1d1e2c; --text2:#565a73; --muted:#8a8da6;
+    --surface:#ffffff; --border:#e4e6f1; --green:#07976a; --amber:#d97706; --red:#e23145;
+    --shadow:0 1px 3px rgba(30,34,70,.05),0 8px 22px rgba(30,34,70,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font:13px/1.5 "Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:linear-gradient(165deg,#f6f4fe,#eef4fc 45%,#f4f1fb);padding:38px 44px}
+
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+  .logo{width:28px;height:28px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800}
+  .top b{font-size:18px;font-weight:800;letter-spacing:-.3px}
+
+  .hero{text-align:center;margin-bottom:24px}
+  h1{font-size:38px;line-height:1.08;font-weight:800;letter-spacing:-1.1px;margin-bottom:12px}
+  .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{font-size:15px;color:var(--text2);max-width:520px;margin:0 auto}
+
+  .flow{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin:22px 0 30px}
+  .step{font-size:12px;font-weight:700;color:var(--accent);background:rgba(109,74,255,.10);border:1px solid rgba(109,74,255,.20);padding:6px 14px;border-radius:20px}
+  .arrow{color:var(--muted);font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow);break-inside:avoid}
+  .tile .ic{font-size:21px;line-height:1;margin-bottom:9px}
+  .tile h3{font-size:14px;font-weight:700;letter-spacing:-.2px;margin-bottom:3px}
+  .tile p{font-size:12px;color:var(--text2)}
+
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:30px}
+  .foot b{color:var(--text2);font-weight:700}
+</style>
+</head>
+<body>
+  <div class="top"><span class="logo">JK</span><b>JobKit</b></div>
+
+  <div class="hero">
+    <h1>Your entire job search,<br><span class="grad">in one place.</span></h1>
+    <p class="sub">From "should I apply?" to the offer — built from your real experience.</p>
+    <div class="flow">
+      <span class="step">Decide</span><span class="arrow">→</span>
+      <span class="step">Tailor</span><span class="arrow">→</span>
+      <span class="step">Apply</span><span class="arrow">→</span>
+      <span class="step">Track</span><span class="arrow">→</span>
+      <span class="step">Prep</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="tile"><div class="ic">🎯</div><h3>Match check</h3><p>Apply, maybe, or skip</p></div>
+    <div class="tile"><div class="ic">📋</div><h3>Fit &amp; gaps</h3><p>Honest score, real gaps</p></div>
+    <div class="tile"><div class="ic">✍️</div><h3>Tailored resume</h3><p>ATS-matched in seconds</p></div>
+
+    <div class="tile"><div class="ic">🏅</div><h3>ATS score</h3><p>Coverage + quality gates</p></div>
+    <div class="tile"><div class="ic">💌</div><h3>Cover letter &amp; InMail</h3><p>Ready to send</p></div>
+    <div class="tile"><div class="ic">📄</div><h3>One-click export</h3><p>DOCX or HTML</p></div>
+
+    <div class="tile"><div class="ic">🔒</div><h3>No fabrication</h3><p>Your real experience only</p></div>
+    <div class="tile"><div class="ic">➕</div><h3>Known facts</h3><p>Add once, reused</p></div>
+    <div class="tile"><div class="ic">📈</div><h3>Live pipeline</h3><p>Every stage at a glance</p></div>
+
+    <div class="tile"><div class="ic">🔎</div><h3>Filter &amp; search</h3><p>Find anything fast</p></div>
+    <div class="tile"><div class="ic">🏢</div><h3>Company hub</h3><p>Notes, JD &amp; files</p></div>
+    <div class="tile"><div class="ic">🎙️</div><h3>Interview prep</h3><p>Round-by-round packs</p></div>
+
+    <div class="tile"><div class="ic">⚡</div><h3>Quick log</h3><p>Instant updates</p></div>
+    <div class="tile"><div class="ic">🪄</div><h3>Smart intake</h3><p>Messy notes, auto-filed</p></div>
+    <div class="tile"><div class="ic">🧠</div><h3>Learns your wins</h3><p>Gets better as you go</p></div>
+  </div>
+
+  <div class="foot"><b>JobKit</b> · Apply smart, not often.</div>
+</body>
+</html>

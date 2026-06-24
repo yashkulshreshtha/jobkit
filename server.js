@@ -4,7 +4,9 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { Document, Packer, Paragraph, TextRun, AlignmentType, LevelFormat, BorderStyle, TabStopType } = require('docx');
 const mammoth = require('mammoth');
+const { PDFParse } = require('pdf-parse');
 const { marked } = require('marked');
+const { computeAtsScore } = require('./ats');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -433,14 +435,32 @@ function serverParseMd(md) {
   return { name, title, contact, profile, competencies, skills_stack, experience, education, technical_skills, languages_recognition };
 }
 
+// Extract plain text from a DOCX/PDF buffer. Used by both upload-sent (at save time)
+// and extract-context (on-the-fly fallback for resumes uploaded before PDF support).
+async function extractResumeText(buf, ext) {
+  if (ext === 'docx') {
+    const r = await mammoth.extractRawText({ buffer: buf });
+    return (r.value || '').trim();
+  }
+  if (ext === 'pdf') {
+    const parser = new PDFParse({ data: buf });
+    try { const r = await parser.getText(); return (r.text || '').trim(); }
+    finally { await parser.destroy().catch(() => {}); }
+  }
+  return '';
+}
+
 function upsertPipelineRow(pipelineContent, name, role, stage, today) {
   const updated = updatePipelineStage(pipelineContent, name, stage);
   if (updated !== pipelineContent) return updated; // found and updated existing row
 
-  // company not in pipeline — add a new row
+  // company not in pipeline — add a new row.
+  // Pipe chars in a value would break the markdown table columns (e.g. German
+  // gender tags like "(m|w|d)"), so collapse them to "/" before inserting.
+  const cell = v => String(v).replace(/\|/g, '/').trim();
   const lines = pipelineContent.split('\n');
-  const nameDisplay = name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  const newRow = `| ${nameDisplay} | ${role || '—'} | — | ${stage} | — | — | ${today} |`;
+  const nameDisplay = cell(name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()));
+  const newRow = `| ${nameDisplay} | ${role ? cell(role) : '—'} | — | ${cell(stage)} | — | — | ${today} |`;
   let lastTableIdx = -1;
   lines.forEach((l, i) => {
     if (l.startsWith('|') && !/^\|[-\s:|]+\|/.test(l)) lastTableIdx = i;
@@ -952,6 +972,9 @@ app.post('/api/run', async (req, res) => {
 
     console.log('[/api/run] clean output length:', clean.length, '| docxFile:', docxFile);
 
+    // Deterministic ATS keyword-coverage score (JD vs the tailored resume text).
+    const ats = (jd && finalMd) ? computeAtsScore(jd, finalMd) : null;
+
     res.json({
       output:         clean,
       resume_preview: resumePreview,
@@ -961,6 +984,7 @@ app.post('/api/run', async (req, res) => {
       docx_file:      docxFile,
       html_file:      htmlFile,
       saved_cover:    savedCL ? savedCL[1] : null,
+      ats,
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -981,6 +1005,19 @@ app.post('/api/upload-sent', async (req, res) => {
     const safeFname = rawName.replace(/[^a-zA-Z0-9._-]/g, '-');
     const buf = Buffer.from(file_base64, 'base64');
 
+    // preserve the most recent tailored draft (.md) as _draft.md so the learning step
+    // can diff draft -> submitted. The delete loop below would otherwise destroy it.
+    try {
+      const existing = await fs.readdir(coDir);
+      const draftMds = existing
+        .filter(f => f !== safeFname && /^resume-.*\.md$/.test(f))
+        .sort().reverse();
+      if (draftMds.length) {
+        const draftText = await fs.readFile(path.join(coDir, draftMds[0]), 'utf8');
+        await fs.writeFile(path.join(coDir, '_draft.md'), draftText);
+      }
+    } catch (e) {}
+
     // delete all prior generated resume files (drafts) — uploaded file is the source of truth
     try {
       const existing = await fs.readdir(coDir);
@@ -993,19 +1030,17 @@ app.post('/api/upload-sent', async (req, res) => {
 
     await fs.writeFile(path.join(coDir, safeFname), buf);
 
-    // extract text from DOCX and save as canonical .md — fast, no Claude needed
+    // extract text from DOCX/PDF and save as canonical .md — fast, no Claude needed.
+    // This .md is what the learning step diffs against the draft, so both formats must extract.
     let extracted = false;
-    if (ext === 'docx') {
-      try {
-        const result = await mammoth.extractRawText({ buffer: buf });
-        const text = result.value.trim();
-        if (text) {
-          await fs.writeFile(path.join(coDir, safeFname.replace(/\.docx$/i, '.md')), text);
-          extracted = true;
-        }
-      } catch (e) {
-        console.error('[upload-sent] mammoth error:', e.message);
+    try {
+      const text = await extractResumeText(buf, ext);
+      if (text) {
+        await fs.writeFile(path.join(coDir, safeFname.replace(/\.(docx|pdf)$/i, '.md')), text);
+        extracted = true;
       }
+    } catch (e) {
+      console.error('[upload-sent] text extraction error:', e.message);
     }
 
     // update company file
@@ -1047,25 +1082,69 @@ app.post('/api/extract-context', async (req, res) => {
     const { company } = req.body;
     if (!company || !safeName(company)) return res.status(400).json({ error: 'bad company' });
 
-    // read the most recently saved .md for this company
+    // gather the three signals: submitted resume (source of truth), the machine draft
+    // /tailor produced (stashed on upload), and the JD the resume was tailored against.
     const coDir = path.join(ROOT, 'output', company);
-    let resumeText = null;
+    let submittedText = null, draftText = null, jdText = null;
     try {
       const files = await fs.readdir(coDir);
-      const mds = files.filter(f => f.endsWith('.md')).sort().reverse();
-      if (mds.length) resumeText = (await fs.readFile(path.join(coDir, mds[0]), 'utf8')).trim();
+      const subMds = files
+        .filter(f => f.endsWith('.md') && f !== '_draft.md' && !/^jd-/.test(f))
+        .sort().reverse();
+      if (subMds.length) submittedText = (await fs.readFile(path.join(coDir, subMds[0]), 'utf8')).trim();
+      // Fallback for resumes uploaded before PDF support: no .md yet — extract the
+      // newest submitted PDF/DOCX on the fly and cache it as .md.
+      if (!submittedText) {
+        const docs = files.filter(f => /\.(pdf|docx)$/i.test(f)).sort().reverse();
+        if (docs.length) {
+          const docExt = docs[0].split('.').pop().toLowerCase();
+          const buf = await fs.readFile(path.join(coDir, docs[0]));
+          submittedText = await extractResumeText(buf, docExt);
+          if (submittedText) {
+            await fs.writeFile(path.join(coDir, docs[0].replace(/\.(pdf|docx)$/i, '.md')), submittedText).catch(() => {});
+          }
+        }
+      }
+      if (files.includes('_draft.md')) draftText = (await fs.readFile(path.join(coDir, '_draft.md'), 'utf8')).trim();
+      const jds = files.filter(f => /^jd-.*\.md$/.test(f)).sort().reverse();
+      if (jds.length) jdText = (await fs.readFile(path.join(coDir, jds[0]), 'utf8')).trim();
     } catch (e) {}
 
-    if (!resumeText) return res.json({ new_bullets: [] });
+    if (!submittedText) return res.json({ new_bullets: [], framing_lessons: [] });
 
-    const prompt = `Read CLAUDE.md, specifically the achievement bank section. Then compare it against this submitted resume:\n\n---\n${resumeText.substring(0, 4000)}\n---\n\nIdentify achievement bullets, facts, or phrasings in the resume that are NOT already in the achievement bank and are worth adding for future tailoring. Only genuinely new facts — not rephrased versions of existing bullets. Return raw JSON only, no markdown fences: {"new_bullets":["bullet1","bullet2"]}. If nothing is new, return {"new_bullets":[]}.`;
+    const empty = { new_bullets: [], framing_lessons: [] };
+    const prompt = `You are improving a resume-tailoring system whose single goal is to produce a tailored resume that clears recruiter/ATS screening. Read CLAUDE.md first — especially the achievement bank, the "Positioning", "Voice rules", "Honesty rules" and "Fabrication log" sections.
+
+Below are up to three artefacts for the role at "${company}":
+${jdText ? `\n=== JOB DESCRIPTION ===\n${jdText.substring(0, 3000)}\n` : '\n(No JD captured for this role.)\n'}${draftText ? `\n=== MACHINE-TAILORED DRAFT (what /tailor produced) ===\n${draftText.substring(0, 4000)}\n` : '\n(No machine draft available — the user uploaded without tailoring in this tool.)\n'}
+=== SUBMITTED RESUME (what the user actually sent after their own edits — the screening-intended source of truth) ===
+${submittedText.substring(0, 4000)}
+
+Produce TWO things:
+
+1. "new_bullets": genuinely NEW facts/achievements present in the submitted resume that are NOT already in the achievement bank and are worth reusing. Only real new facts — never rephrasings of existing bullets.
+
+2. "framing_lessons": ${draftText ? 'Compare the draft against the submitted version. ' : ''}Infer GENERALISABLE tailoring rules from how the submitted resume is positioned relative to the JD${draftText ? ', and from what the user changed, cut, reordered or re-emphasised versus the draft' : ''}. Each lesson must be ONE concise, reusable imperative rule that would make the NEXT tailored resume more likely to clear screening — about positioning, emphasis, section ordering, what to cut, tone, or keyword coverage. Make them generalisable (e.g. "When a JD is QA-titled but the role is EM-scope, lead with engineering leadership and treat quality as a differentiator"), NOT a narration of this one resume, and NOT new facts. Never propose anything that conflicts with the Honesty rules / Fabrication log. If the submitted resume and the draft are essentially the same, return [].
+
+Return raw JSON only, no markdown fences: {"new_bullets":[...],"framing_lessons":[...]}`;
     const out = await runClaude(prompt);
-    const m = out.match(/\{[\s\S]*?\}/);
-    if (!m) return res.json({ new_bullets: [] });
+    const m = out.match(/\{[\s\S]*\}/);
+    if (!m) return res.json(empty);
     try {
       const parsed = JSON.parse(m[0]);
-      res.json({ new_bullets: Array.isArray(parsed.new_bullets) ? parsed.new_bullets : [] });
-    } catch { res.json({ new_bullets: [] }); }
+      // The model sometimes returns objects ({bullet, note, company}) instead of plain
+      // strings — normalise both arrays to clean strings so the UI and add-to-bank don't break.
+      const toStr = x => {
+        if (typeof x === 'string') return x.trim();
+        if (x && typeof x === 'object') return String(x.bullet || x.lesson || x.text || '').trim();
+        return '';
+      };
+      const norm = arr => (Array.isArray(arr) ? arr.map(toStr).filter(Boolean) : []);
+      res.json({
+        new_bullets: norm(parsed.new_bullets),
+        framing_lessons: norm(parsed.framing_lessons),
+      });
+    } catch { res.json(empty); }
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1080,6 +1159,29 @@ app.post('/api/add-to-bank', async (req, res) => {
       content = content.replace('## Target companies', newLines + '\n\n## Target companies');
     } else {
       content += '\n' + newLines;
+    }
+    await fs.writeFile(claudePath, content);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/add-lessons', async (req, res) => {
+  try {
+    const { lessons } = req.body;
+    if (!lessons || !lessons.length) return res.status(400).json({ error: 'no lessons' });
+    const claudePath = path.join(ROOT, 'CLAUDE.md');
+    let content = await fs.readFile(claudePath, 'utf8');
+    const newLines = lessons.map(l => '- ' + l.replace(/^[-*•]\s*/, '').trim()).join('\n');
+    const heading = '## Tailoring lessons (learned from submitted resumes)';
+    if (content.includes(heading)) {
+      // append under the existing section heading
+      content = content.replace(heading + '\n', heading + '\n' + newLines + '\n');
+    } else if (content.includes('## Voice rules')) {
+      // create the section just above Voice rules so /tailor reads it alongside positioning
+      content = content.replace('## Voice rules',
+        heading + '\n' + newLines + '\n\n## Voice rules');
+    } else {
+      content += '\n\n' + heading + '\n' + newLines + '\n';
     }
     await fs.writeFile(claudePath, content);
     res.json({ ok: true });

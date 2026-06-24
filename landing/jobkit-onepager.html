@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+<style>
+  @page{ size:A4; margin:0 }
+  :root{
+    --accent:#6d4aff; --accent2:#2f7cf6; --text:#1d1e2c; --text2:#565a73; --muted:#8a8da6;
+    --surface:#ffffff; --border:#e4e6f1; --green:#07976a; --amber:#d97706; --red:#e23145;
+    --shadow:0 2px 8px rgba(30,34,70,.07),0 10px 26px rgba(30,34,70,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{
+    font:13px/1.55 "Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--text);
+    background:linear-gradient(165deg,#f6f4fe,#eef4fc 45%,#f4f1fb);
+    padding:30px 46px;
+  }
+  header{display:flex;align-items:center;gap:9px;margin-bottom:26px}
+  .logo{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:15px}
+  .brand{font-weight:800;font-size:18px;letter-spacing:-.3px}
+  .brand small{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0}
+
+  .hero{text-align:center;margin-bottom:22px}
+  .pill{display:inline-block;font-size:11px;font-weight:600;color:var(--accent);background:rgba(109,74,255,.10);border:1px solid rgba(109,74,255,.22);padding:4px 12px;border-radius:20px;margin-bottom:14px}
+  h1{font-size:34px;line-height:1.08;font-weight:800;letter-spacing:-1px;margin-bottom:12px}
+  .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{font-size:14px;color:var(--text2);max-width:560px;margin:0 auto}
+  .badges{margin-top:16px;display:flex;gap:7px;justify-content:center}
+  .badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px}
+  .b-green{background:rgba(7,151,106,.12);color:var(--green);border:1px solid rgba(7,151,106,.28)}
+  .b-amber{background:rgba(217,119,6,.12);color:var(--amber);border:1px solid rgba(217,119,6,.30)}
+  .b-red{background:rgba(226,49,69,.10);color:var(--red);border:1px solid rgba(226,49,69,.28)}
+
+  .label{text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 11px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px;box-shadow:var(--shadow)}
+  .card .ic{font-size:19px;line-height:1;margin-bottom:7px}
+  .card .n{width:24px;height:24px;border-radius:7px;background:rgba(109,74,255,.10);color:var(--accent);font-weight:800;font-size:12px;display:grid;place-items:center;margin-bottom:8px}
+  .card h3{font-size:14px;font-weight:700;margin-bottom:4px;letter-spacing:-.2px}
+  .card p{font-size:11.5px;color:var(--text2);line-height:1.45}
+
+  .strip{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .tick{color:var(--green);font-weight:800}
+
+  .cta{margin-top:16px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:18px}
+  .cta h2{font-size:19px;font-weight:800;letter-spacing:-.4px;margin-bottom:6px}
+  .cta p{font-size:13px;color:var(--text2)}
+  .cta .accent{color:var(--accent);font-weight:700}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin-top:14px}
+</style>
+</head>
+<body>
+  <header>
+    <span class="logo">💼</span>
+    <div class="brand">JobKit<small>Your entire job search, in one place</small></div>
+  </header>
+
+  <section class="hero">
+    <span class="pill">Private beta · invitation</span>
+    <h1>Apply smart,<br><span class="grad">not often.</span></h1>
+    <p class="sub">Paste any job and get an honest apply-or-skip verdict — then tailor an ATS-ready resume, prep for the interview, and track every application. One workflow, built from your real experience.</p>
+    <div class="badges">
+      <span class="badge b-green">APPLY</span>
+      <span class="badge b-amber">MAYBE</span>
+      <span class="badge b-red">SKIP</span>
+    </div>
+  </section>
+
+  <div class="label">How it works</div>
+  <div class="grid3">
+    <div class="card"><div class="n">1</div><h3>Paste the job</h3><p>Drop in any job description or link — from LinkedIn or anywhere else.</p></div>
+    <div class="card"><div class="n">2</div><h3>Get an honest read</h3><p>APPLY / MAYBE / SKIP, a match score, and the real gaps — so you skip bad fits.</p></div>
+    <div class="card"><div class="n">3</div><h3>Tailor in one click</h3><p>A keyword-matched, ATS-checked resume for that role — from your real experience.</p></div>
+  </div>
+
+  <div class="label">Everything your job search needs</div>
+  <div class="grid3">
+    <div class="card"><div class="ic">🎯</div><h3>Apply or skip</h3><p>An honest verdict and match score for any job, so you chase only the ones worth it.</p></div>
+    <div class="card"><div class="ic">✍️</div><h3>Tailored resumes</h3><p>ATS-checked, keyword-matched resumes for each role — from your real experience.</p></div>
+    <div class="card"><div class="ic">🎙️</div><h3>Interview prep</h3><p>Round-by-round prep packs: likely questions, your real gaps, and how to position.</p></div>
+    <div class="card"><div class="ic">📊</div><h3>Pipeline tracker</h3><p>Every application and its stage — submitted, screening, interviewing — at a glance.</p></div>
+    <div class="card"><div class="ic">🏢</div><h3>Company hub</h3><p>Notes, the original job description, and every file you've sent, organised per company.</p></div>
+    <div class="card"><div class="ic">⚡</div><h3>Quick capture</h3><p>Drop in messy updates and JobKit files them to the right company automatically.</p></div>
+  </div>
+
+  <div class="strip">
+    <span class="pill"><span class="tick">✓</span> Honest — never invents experience</span>
+    <span class="pill"><span class="tick">✓</span> ATS-aware</span>
+    <span class="pill"><span class="tick">✓</span> Your data stays yours</span>
+  </div>
+
+  <div class="cta">
+    <h2>Want early access?</h2>
+    <p>JobKit is in private beta. Reply with your email and I'll add you to the first invite round — <span class="accent">yashkul@gmail.com</span></p>
+  </div>
+
+  <footer>JobKit · Built for job seekers who'd rather apply smart than apply often.</footer>
+</body>
+</html>

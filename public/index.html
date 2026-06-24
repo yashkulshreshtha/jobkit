@@ -85,6 +85,7 @@
         <span class="output-label">Output</span>
         <span class="ats-badge" id="ats-badge" hidden></span>
         <button class="ghost btn-sm" id="diff-toggle" hidden>Show changes</button>
+        <span id="ats-missing" class="hint" style="flex-basis:100%;margin-top:6px" hidden></span>
         <button class="ghost btn-sm" data-copy="tailor-out-raw">Copy</button>
         <button class="ghost btn-sm" data-clear="tailor">Clear</button>
       </div>
@@ -216,6 +217,7 @@
 
       <div id="company-upload-section" style="margin-top:4px;margin-bottom:16px">
         <button class="ghost btn-sm" id="upload-resume-toggle">↑ Upload submitted resume</button>
+        <button class="ghost btn-sm" id="rerun-learning-btn" style="margin-left:8px">↻ Re-run learning</button>
         <div id="upload-form" hidden style="margin-top:14px;padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius)">
           <div style="display:flex;gap:12px;align-items:flex-start">
             <div style="flex:1">
@@ -244,6 +246,11 @@
             <div class="section-sublabel" style="margin-top:0">New context for achievement bank</div>
             <p class="hint" style="margin-top:4px;margin-bottom:10px">Review what's genuinely new. Check what you want added to CLAUDE.md.</p>
             <div id="context-bullets-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+            <div id="context-lessons-block" hidden>
+              <div class="section-sublabel" style="margin-top:6px">Tailoring lessons (so the next resume clears screening)</div>
+              <p class="hint" style="margin-top:4px;margin-bottom:10px">Learned by comparing your submitted resume against the tailored draft and the JD. Check what /tailor should remember.</p>
+              <div id="context-lessons-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+            </div>
             <div class="row" style="margin-top:0">
               <button class="primary btn-sm" id="add-selected-context">Add checked to CLAUDE.md</button>
               <span id="context-add-status" style="font-size:13px;color:var(--muted)"></span>

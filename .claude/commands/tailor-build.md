@@ -12,6 +12,10 @@ Assume fit has already been confirmed. Do NOT re-run the fit verdict.
 FABRICATION GUARD: Read ## Fabrication log in CLAUDE.md. Never use flagged claims.
 For any fact not in the achievement bank, write [VERIFY: claim] instead.
 
+LESSONS: Read ## Tailoring lessons in CLAUDE.md (if present) and apply the relevant
+rules — these are positioning/framing lessons learned from past submitted resumes,
+meant to make this one clear screening. They never override the Fabrication/Honesty rules.
+
 HARD RULES (override any desire to match the JD — breaking one is a failure):
 1. TITLE LOCK — experience job titles are fixed facts; use them exactly as in CLAUDE.md (Delivery Hero =
    "Engineering Manager / Quality Engineering Manager"). Never invent/upgrade a title (no "Staff
@@ -67,3 +71,6 @@ Then list gaps honestly.
 
 If --cover-letter flag present: write ~180 words in my voice, save as
 output/cover-letter-<slug>-<YYYYMMDD>.md, output SAVED_CL marker.
+
+This runs in a non-chat UI — output is displayed, not replied to. End on the deliverables and the
+honest gaps. Do NOT end by asking what to do next or offering to do more. Never end on a question.

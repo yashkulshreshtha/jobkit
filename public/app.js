@@ -769,12 +769,28 @@ function parseATSScore(text) {
   return null;
 }
 
-function showATSBadge(score) {
+function showATSBadge(score, ats) {
   const el = $('#ats-badge');
-  if (score === null) { el.hidden = true; return; }
+  const miss = $('#ats-missing');
+  if (score === null || score === undefined) {
+    el.hidden = true;
+    if (miss) miss.hidden = true;
+    return;
+  }
   el.textContent = 'ATS ' + score + '%';
   el.className = 'ats-badge ' + (score >= 85 ? 'green' : score >= 70 ? 'amber' : 'red');
   el.hidden = false;
+  // Show which JD keywords are missing — the actionable half of a deterministic score.
+  if (miss) {
+    const missing = (ats && ats.missing) || [];
+    if (missing.length) {
+      el.title = 'Matched ' + (ats.matched ? ats.matched.length : 0) + '/' + ats.keyword_count + ' JD keywords';
+      miss.textContent = 'Missing keywords: ' + missing.slice(0, 12).join(', ') + (missing.length > 12 ? '…' : '');
+      miss.hidden = false;
+    } else {
+      miss.hidden = true;
+    }
+  }
 }
 
 function initBulletEdit() {
@@ -970,7 +986,7 @@ document.getElementById('tailor-run').addEventListener('click', async () => {
   const jd = document.getElementById('tailor-jd').value.trim();
   if (!jd) return setStatus('Paste a JD first', 'error');
 
-  const ids = ['tailor-out-wrap','tailor-actions','ats-badge','diff-toggle','diff-callout','tailor-pdf-hint'];
+  const ids = ['tailor-out-wrap','tailor-actions','ats-badge','ats-missing','diff-toggle','diff-callout','tailor-pdf-hint'];
   ids.forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
   const rp = document.getElementById('resume-preview');
   if (rp) rp.innerHTML = '';
@@ -1025,7 +1041,9 @@ document.getElementById('tailor-run').addEventListener('click', async () => {
     render('#tailor-out', d.output || '');
     const rawEl = document.getElementById('tailor-out-raw');
     if (rawEl) rawEl.value = d.output || '';
-    showATSBadge(parseATSScore(d.output || ''));
+    // Deterministic ATS score from the server; fall back to the legacy text-scrape only if absent.
+    if (d.ats && typeof d.ats.score === 'number') showATSBadge(d.ats.score, d.ats);
+    else showATSBadge(parseATSScore(d.output || ''));
     // auto-open analysis section when there's content
     if (d.output) {
       const det = document.querySelector('.analysis-details');
@@ -1177,6 +1195,7 @@ document.addEventListener('click', e => {
       document.getElementById('tailor-actions').hidden = true;
       document.getElementById('tailor-progress').hidden = true;
       document.getElementById('ats-badge').hidden = true;
+      const am = document.getElementById('ats-missing'); if (am) am.hidden = true;
       const dt = document.getElementById('diff-toggle');
       if (dt) dt.hidden = true;
       const dc = document.getElementById('diff-callout');
@@ -1230,6 +1249,38 @@ document.getElementById('upload-file').addEventListener('change', function () {
   } else {
     label.textContent = 'Choose file…';
     label.classList.remove('has-file');
+  }
+});
+
+document.getElementById('rerun-learning-btn').addEventListener('click', async () => {
+  const company = window._activeCompany;
+  if (!company) return setStatus('No company selected', 'error');
+  // The status line + results panel live inside the (collapsed) upload form — reveal it
+  // so re-run output is actually visible.
+  document.getElementById('upload-form').hidden = false;
+  const statusEl = document.getElementById('upload-status');
+  statusEl.style.color = 'var(--text-2)';
+  statusEl.textContent = 'Re-running learning (diffing submitted resume ↔ draft ↔ JD)…';
+  statusEl.hidden = false;
+  try {
+    setBusy(true, 'learning…');
+    const ctx = await api('/api/extract-context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company }),
+    });
+    const nb = ctx.new_bullets || [], fl = ctx.framing_lessons || [];
+    if (!nb.length && !fl.length) {
+      statusEl.textContent = '✓ Learning ran — nothing new to add (already captured).';
+    } else {
+      statusEl.textContent = '✓ Learning ran — review below.';
+    }
+    showContextReview(nb, fl);
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Learning failed: ' + e.message;
+  } finally {
+    setBusy(false);
   }
 });
 
@@ -1297,7 +1348,7 @@ document.getElementById('upload-submit-btn').addEventListener('click', async () 
           body: JSON.stringify({ company }),
         });
         statusEl.textContent = '✓ Registered: ' + r.filename + ' · logged in pipeline';
-        showContextReview(ctx.new_bullets || []);
+        showContextReview(ctx.new_bullets || [], ctx.framing_lessons || []);
       } catch (e) {
         statusEl.textContent += ' (context extraction failed)';
       }
@@ -1310,39 +1361,82 @@ document.getElementById('upload-submit-btn').addEventListener('click', async () 
   }
 });
 
-function showContextReview(bullets) {
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function showContextReview(bullets, lessons) {
+  lessons = lessons || [];
   const list = document.getElementById('context-bullets-list');
   const section = document.getElementById('context-review');
   if (!bullets.length) {
     list.innerHTML = '<p style="color:var(--muted);font-size:13px">No new achievements found — everything already in the bank.</p>';
-    section.hidden = false;
-    return;
+  } else {
+    list.innerHTML = bullets.map((b, i) => `
+      <label class="context-bullet-row">
+        <input type="checkbox" class="context-cb" data-idx="${i}" checked />
+        <span>${escapeHtml(b)}</span>
+      </label>
+    `).join('');
   }
-  list.innerHTML = bullets.map((b, i) => `
-    <label class="context-bullet-row">
-      <input type="checkbox" class="context-cb" data-idx="${i}" checked />
-      <span>${b}</span>
-    </label>
-  `).join('');
   list._bullets = bullets;
+
+  const lessonsBlock = document.getElementById('context-lessons-block');
+  const lessonsList = document.getElementById('context-lessons-list');
+  if (lessons.length) {
+    lessonsList.innerHTML = lessons.map((l, i) => `
+      <label class="context-bullet-row">
+        <input type="checkbox" class="context-lesson-cb" data-idx="${i}" checked />
+        <span>${escapeHtml(l)}</span>
+      </label>
+    `).join('');
+    lessonsList._lessons = lessons;
+    lessonsBlock.hidden = false;
+  } else {
+    lessonsList._lessons = [];
+    lessonsBlock.hidden = true;
+  }
   section.hidden = false;
 }
 
 document.getElementById('add-selected-context').addEventListener('click', async () => {
   const list = document.getElementById('context-bullets-list');
-  const checked = Array.from(list.querySelectorAll('.context-cb:checked'))
+  const lessonsList = document.getElementById('context-lessons-list');
+  const checkedBullets = Array.from(list.querySelectorAll('.context-cb:checked'))
     .map(cb => list._bullets[parseInt(cb.dataset.idx)]);
-  if (!checked.length) return;
+  const checkedLessons = Array.from(lessonsList.querySelectorAll('.context-lesson-cb:checked'))
+    .map(cb => lessonsList._lessons[parseInt(cb.dataset.idx)]);
+  if (!checkedBullets.length && !checkedLessons.length) return;
   const statusEl = document.getElementById('context-add-status');
   try {
     setBusy(true, 'updating CLAUDE.md…');
-    await api('/api/add-to-bank', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bullets: checked }),
-    });
-    statusEl.textContent = '✓ ' + checked.length + ' bullet' + (checked.length > 1 ? 's' : '') + ' added to CLAUDE.md';
+    const calls = [];
+    if (checkedBullets.length) {
+      calls.push(api('/api/add-to-bank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bullets: checkedBullets }),
+      }));
+    }
+    if (checkedLessons.length) {
+      calls.push(api('/api/add-lessons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessons: checkedLessons }),
+      }));
+    }
+    await Promise.all(calls);
+    const parts = [];
+    if (checkedBullets.length) parts.push(checkedBullets.length + ' bullet' + (checkedBullets.length > 1 ? 's' : ''));
+    if (checkedLessons.length) parts.push(checkedLessons.length + ' lesson' + (checkedLessons.length > 1 ? 's' : ''));
+    statusEl.textContent = '✓ ' + parts.join(' + ') + ' added to CLAUDE.md';
     list.querySelectorAll('.context-cb:checked').forEach(cb => {
+      cb.closest('label').style.opacity = '0.4';
+      cb.disabled = true;
+    });
+    lessonsList.querySelectorAll('.context-lesson-cb:checked').forEach(cb => {
       cb.closest('label').style.opacity = '0.4';
       cb.disabled = true;
     });

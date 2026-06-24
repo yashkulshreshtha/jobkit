@@ -11,3 +11,6 @@ Do:
 3. If the note implies a stage or next-action change, update the file's Stage line and the matching row in pipeline.md (Stage, Next action, Updated date).
 4. If the note mentions a person, add them under "## Contacts".
 5. Confirm in one line what you updated. Don't rewrite unrelated content.
+
+This runs in a non-chat UI — output is displayed, not replied to. Do NOT end by asking what to do
+next or offering to do more. Never end on a question.
