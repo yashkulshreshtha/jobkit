@@ -46,6 +46,11 @@ HARD RULES (override any desire to match the JD — breaking one is a failure, n
 
 STEP 1 — PARSE
 Remove any flags from JD text and note which are present.
+RESOLVE URL: if the JD argument is a URL (starts with http:// or https://) rather than pasted
+text, fetch the page and extract the full job description text (title, company, location,
+responsibilities, requirements, benefits) before doing anything else. Use that fetched text as
+THE JD for every step below. If the fetch fails (e.g. login wall), stop and say so plainly —
+do not proceed with just the URL string as the JD.
 Extract: role title, company name and slug (lowercase-hyphens, e.g. "trade-republic"),
 EM vs QA lean, seniority, location, language requirement (flag if German required),
 8–10 must-have keywords, 3–4 nice-to-have keywords. Note today's date (YYYYMMDD).
@@ -171,6 +176,11 @@ If any check FAILS, fix the draft before Step 7. Never save a resume that fails 
 
 STEP 7 — SAVE AND OUTPUT STRUCTURED DATA
 Save the complete final resume as output/resume-<slug>-<YYYYMMDD>.md
+Also save the FULL resolved JD text (the fetched text if the input was a URL; the pasted text
+otherwise — never just a URL string) as output/<slug>/jd-<YYYYMMDD>.md, with this header:
+`# JD — <jd_title> — <slug>` then `_Captured <YYYY-MM-DD>_` then a blank line then the JD text.
+This guarantees the JD is persisted on every run (CLI or UI, text or URL). Then emit the marker
+`<!-- SAVED_JD: output/<slug>/jd-<YYYYMMDD>.md -->` so the server knows not to overwrite it.
 
 Then output this JSON block exactly between the markers (server uses it to build .docx):
 

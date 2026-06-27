@@ -839,6 +839,7 @@ app.post('/api/run', async (req, res) => {
     const diffMatch    = out.match(/<!--\s*DIFF_DATA\s*([\s\S]*?)-->/);
     const savedMatch   = out.match(/<!--\s*SAVED:\s*(output\/[^\s]+)\s*-->/);
     const savedCL      = out.match(/<!--\s*SAVED_CL:\s*(output\/[^\s]+)\s*-->/);
+    const savedJD      = out.match(/<!--\s*SAVED_JD:\s*(output\/[^\s]+)\s*-->/);
     const diffSumMatch = out.match(/<!--\s*DIFF_SUMMARY:\s*added=(\d+)\s+modified=(\d+)\s+removed=(\d+)\s*-->/);
 
     console.log('[/api/run] jsonMatch:', !!jsonMatch, '| savedMatch:', savedMatch ? savedMatch[1] : null);
@@ -851,10 +852,14 @@ app.post('/api/run', async (req, res) => {
         const coDir = path.join(ROOT, 'output', resumeData.slug);
         await fs.mkdir(coDir, { recursive: true });
         // Persist the full JD so prep can diff it against the CV later. The JD is otherwise
-        // discarded after tailoring — store it the moment we know the company slug.
-        if (jd && jd.trim()) {
+        // discarded after tailoring. The skill now writes the resolved JD itself (SAVED_JD marker)
+        // — including fetching the text when the input was a URL — so only fall back to saving the
+        // request body here when the skill didn't, and never persist a bare URL string.
+        const jdInput = (jd || '').trim();
+        const jdIsBareUrl = /^https?:\/\/\S+$/.test(jdInput);
+        if (!savedJD && jdInput && !jdIsBareUrl) {
           const header = `# JD — ${resumeData.jd_title || 'Role'} — ${resumeData.slug}\n_Captured ${resumeData.date}_\n\n`;
-          await fs.writeFile(path.join(coDir, 'jd-' + resumeData.date + '.md'), header + jd.trim())
+          await fs.writeFile(path.join(coDir, 'jd-' + resumeData.date + '.md'), header + jdInput)
             .catch(e => console.error('[/api/run] JD save error:', e.message));
         }
         docxFile = resumeData.slug + '/resume-' + resumeData.slug + '-' + resumeData.date + '.docx';

@@ -9,6 +9,10 @@ $ARGUMENTS
 
 Assume fit has already been confirmed. Do NOT re-run the fit verdict.
 
+RESOLVE URL: if the JD above is a URL (starts with http:// or https://) rather than pasted text,
+fetch the page and extract the full job description text first, and use that fetched text as THE JD
+throughout. If the fetch fails, say so plainly — never proceed with just the URL string as the JD.
+
 FABRICATION GUARD: Read ## Fabrication log in CLAUDE.md. Never use flagged claims.
 For any fact not in the achievement bank, write [VERIFY: claim] instead.
 
@@ -65,8 +69,12 @@ Quantification check, action verb check, 2-page cap. Fix and report each.
 
 STEP 6 — SAVE
 Save resume as output/resume-<slug>-<YYYYMMDD>.md
+Also save the FULL resolved JD text (fetched text if the input was a URL; pasted text otherwise —
+never just a URL string) as output/<slug>/jd-<YYYYMMDD>.md, header
+`# JD — <jd_title> — <slug>` / `_Captured <YYYY-MM-DD>_` / blank line / JD text. Then emit
+`<!-- SAVED_JD: output/<slug>/jd-<YYYYMMDD>.md -->` so the server won't overwrite it.
 
-Output RESUME_JSON block, SAVED marker, DIFF_SUMMARY marker, DIFF_DATA block.
+Output RESUME_JSON block, SAVED marker, SAVED_JD marker, DIFF_SUMMARY marker, DIFF_DATA block.
 Then list gaps honestly.
 
 If --cover-letter flag present: write ~180 words in my voice, save as
