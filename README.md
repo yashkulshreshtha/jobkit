@@ -17,8 +17,7 @@ spawned headless on each request to read and write the actual files in the repo.
 > **What it demonstrates:** LLM-agent application design (CLI-as-runtime, prompt-programs) ·
 > grounding & anti-hallucination for generative output · full-stack shipping (Node/Express, vanilla
 > JS, document generation) · a closed learning loop · pragmatic engineering judgment (fast/slow
-> split, deterministic scoring over an LLM guess). Designed, built and shipped solo, end to end —
-> and used daily on a live job hunt of my own.
+> split, deterministic scoring over an LLM guess). Designed, built and shipped solo, end to end.
 
 This is the public **code** repo; it's clone-and-run for anyone (see [Running it](#running-it-your-own-copy)).
 The data it operates on — résumés, company notes, pipeline — stays in a separate private repo on
@@ -210,7 +209,7 @@ Each LLM-backed action takes ~30s–2min, because a fresh agent loop runs per re
 
 ## Limitations (read before you clone)
 
-I'm publishing this as a **portfolio piece and an idea**, not a product. Be clear-eyed:
+This is a **personal project and a demonstration of an idea**, not a product. Be clear-eyed:
 
 - **Single-user by design.** No accounts, no auth, no multi-tenancy. It assumes one person,
   one machine, one profile. The way to share it is per-person checkouts — each friend clones,
