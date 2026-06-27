@@ -28,5 +28,5 @@ asking whether to build the resume or what to do next. Never end on a question.
 5. As the VERY LAST line, output this machine-readable summary exactly (the UI parses it):
 <!-- MATCH: verdict=<APPLY|MAYBE|SKIP> score=<integer 0-100> -->
 where score is your overall match score for this role against my profile (consider fit verdict,
-keyword/competency overlap, EM-vs-QA lean, location, comp, German requirement, and target tier —
+keyword/competency overlap, role lean, location, comp, any language requirement, and target tier —
 not just the ATS keyword count).

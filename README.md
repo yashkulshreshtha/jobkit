@@ -1,20 +1,34 @@
 # JobKit
 
-**A job-search operating system that runs on top of Claude Code.**
+**A job-application operating system with an LLM agent as its backend.**
 
-JobKit turns a folder of Markdown notes into a working application for running a real job
-search: tailoring resumes to job descriptions, scoring keyword coverage, prepping for
-interviews, and keeping a live pipeline of every company in flight. The interesting part
-isn't the UI — it's that **the backend is an LLM agent.** Every "compute" button spawns a
-headless [Claude Code](https://claude.com/claude-code) process in the repo, lets it read and
-write the actual files, and renders the result.
+JobKit runs your job applications as a version-controlled knowledge base: it tailors your résumé to
+each job description, scores keyword coverage, drafts cover letters, preps you for interviews, and
+keeps a live pipeline of every company in flight. The twist is the architecture — there's no LLM
+API wrapper here. **The backend is the [Claude Code](https://claude.com/claude-code) CLI itself**,
+spawned headless on each request to read and write the actual files in the repo.
 
-This is the public **code** repo. The data it operates on (my resumes, company notes,
-pipeline) lives in a separate private repo — see [Two-repo design](#two-repo-design) below.
+<!-- Hero screenshot: save the Pipeline or Tailor tab as docs/screenshot.png, then UNCOMMENT the
+     line below to show it at the top of the README.
+![JobKit — the Pipeline view](docs/screenshot.png)
+-->
 
-> **Status:** built for one person (me), running locally. It works and I use it daily, but
-> it is deliberately single-user and un-hardened. Read [Limitations](#limitations-read-before-you-clone)
-> before cloning — you'll probably want to *fork the ideas*, not run it as-is.
+
+> **What it demonstrates:** LLM-agent application design (CLI-as-runtime, prompt-programs) ·
+> grounding & anti-hallucination for generative output · full-stack shipping (Node/Express, vanilla
+> JS, document generation) · a closed learning loop · pragmatic engineering judgment (fast/slow
+> split, deterministic scoring over an LLM guess). Designed, built and shipped solo, end to end —
+> and used daily to run an actual search.
+
+This is the public **code** repo; it's clone-and-run for anyone (see [Running it](#running-it-your-own-copy)).
+The data it operates on — résumés, company notes, pipeline — stays in a separate private repo on
+your own machine (see [Two-repo design](#two-repo-design)).
+
+> **Status:** built for one person, running locally — but now clone-and-run for anyone. The
+> [Setup tab](#running-it-your-own-copy) onboards you from a pasted CV into your own profile, and it
+> runs on *your* Claude account with *your* data (all gitignored, never committed). It's still
+> deliberately single-user-per-checkout and un-hardened — read
+> [Limitations](#limitations-read-before-you-clone) before cloning.
 
 ---
 
@@ -39,17 +53,18 @@ resume you actually submit is fed back in and diffed two ways — against the ac
 (to extract generalisable framing lessons). Approved facts and lessons are written back into
 `CLAUDE.md`, so **each application makes the next tailor more likely to clear screening.**
 
-In short: a personal job search as a version-controlled, self-improving knowledge base, with
+In short: your job applications as a version-controlled, self-improving knowledge base, with
 an LLM as the runtime.
 
 ---
 
 ## Features
 
-Seven tabs, each backed by an endpoint in `server.js`:
+Eight tabs, each backed by an endpoint in `server.js`:
 
 | Tab | What it does |
 |---|---|
+| **Setup** | First-run onboarding. Paste your CV / LinkedIn / career notes → JobKit drafts your `CLAUDE.md` profile (achievement bank, positioning, honesty rules), grounded entirely in what you pasted, with anything it can't confirm flagged for review. |
 | **Pipeline** | `pipeline.md` rendered as live status cards — every company, stage, and next action in one view. |
 | **Companies** | Per-company notes and generated files. Upload your *actually-submitted* resume, mark sent, log entries, close/withdraw, delete. |
 | **Check Match** | Paste a JD → fast APPLY/SKIP verdict with reasoning, against an honest fit filter (comp, scope, language, location). Triage before you invest in a full tailor. |
@@ -79,6 +94,19 @@ Seven tabs, each backed by an endpoint in `server.js`:
 ## Technical design
 
 ### Claude Code as a headless backend
+
+```
+Browser (a form)
+   │  HTTP
+   ▼
+Node / Express  ──  fast direct file writes · DOCX/PDF · deterministic ATS math
+   │  spawn `claude -p` in the repo dir
+   ▼
+Claude Code agent  ──reads/writes──▶  CLAUDE.md · companies/ · resumes/ · output/
+   │  runs a slash command (.claude/commands/*.md)
+   ▼
+result rendered back in the UI
+```
 
 The core architectural bet: instead of calling an LLM API and re-implementing tools (file
 read/write, search, document parsing), JobKit uses the **Claude Code CLI as its application
@@ -142,25 +170,38 @@ One working tree, two git repos:
 - **`jobkit-data`** (private) — the actual profile, company files, resumes and pipeline,
   tracked by a separate git dir over the same folder.
 
-So the engine is shareable and the job search stays private.
+So the engine is shareable and your applications stay private.
 
 ---
 
-## Running it
+## Running it (your own copy)
+
+JobKit is built to be cloned and run by anyone, locally, against **their own** Claude account and
+**their own** profile. Your data never leaves your machine and is never committed (it's all
+gitignored). Setup is three steps:
 
 ```bash
 npm install
 npm start          # → http://localhost:3000
 ```
 
-**Prerequisites:**
-- Node (developed on v25; anything modern should work).
-- The [Claude Code CLI](https://claude.com/claude-code) on your `PATH`, already
-  authenticated (`claude` runs from your terminal).
-- A `CLAUDE.md` profile + at least one resume in `resumes/`. **These aren't in this repo** —
-  the profile and all personal data are gitignored and live in the private data repo. You
-  start by writing your own `CLAUDE.md` (achievement bank, voice rules, fabrication log). The
-  excerpts in this README show the shape to aim for.
+1. **Authenticate Claude.** Install the [Claude Code CLI](https://claude.com/claude-code) and make
+   sure `claude` runs from your terminal (logged into your own account). Every compute action spawns
+   `claude` headless and bills *your* account — there's no shared key.
+2. **Onboard.** Open the app; with no profile yet it lands you on the **Setup** tab. Upload your
+   résumé (PDF or DOCX) — optionally add comp/location/spelling and any wins not on the CV — and hit
+   *Generate my profile*. JobKit extracts the résumé, writes your `CLAUDE.md` (achievement bank,
+   positioning, voice and honesty rules) grounded only in what you provided, flagging anything it
+   couldn't confirm with `[VERIFY: …]` / `[ADD: …]`, **and saves the uploaded file as your base
+   résumé** — so there's no separate step. Review and tighten the profile; this corpus is what every
+   other tab reads. (Prefer the terminal? Run `/onboard` there, or copy `CLAUDE.md.template` to
+   `CLAUDE.md` and fill it in by hand, then drop a résumé into `resumes/`.)
+
+That's it — Check Match, Tailor, Prep and the rest now work against your profile.
+
+**Prerequisites:** Node (developed on v25; anything modern works) and the Claude Code CLI on your
+`PATH`. The data directories (`companies/`, `resumes/`, `output/`) and an empty `pipeline.md` are
+created automatically on first boot.
 
 Each LLM-backed action takes ~30s–2min, because a fresh agent loop runs per request.
 
@@ -171,7 +212,8 @@ Each LLM-backed action takes ~30s–2min, because a fresh agent loop runs per re
 I'm publishing this as a **portfolio piece and an idea**, not a product. Be clear-eyed:
 
 - **Single-user by design.** No accounts, no auth, no multi-tenancy. It assumes one person,
-  one machine, one profile. Two people = two checkouts.
+  one machine, one profile. The way to share it is per-person checkouts — each friend clones,
+  onboards their own profile, and runs it on their own Claude account.
 - **Runs `--dangerously-skip-permissions`.** The server spawns Claude with file permissions
   bypassed so edits don't prompt. Fine for a private local folder you own; **do not** expose
   this server to a network or run it from a shared directory.
@@ -179,9 +221,9 @@ I'm publishing this as a **portfolio piece and an idea**, not a product. Be clea
   knowledge base and a liability for anything bigger.
 - **Cost & latency live with the agent.** Every compute click is a full Claude Code run —
   slower and pricier than a single API call, and dependent on your local CLI auth.
-- **The profile is mine.** The achievement bank, fabrication log and tailoring lessons in
-  `CLAUDE.md` are specific to my career. They're included so you can see the *shape* of a
-  good grounding corpus, not so you can apply with them.
+- **Bring your own profile.** The grounding corpus is personal — yours is generated on the Setup
+  tab (or `/onboard`, or `CLAUDE.md.template`) from your own CV and stays on your machine. No
+  example profile ships in this repo; the README excerpts only illustrate the *shape* to aim for.
 - **Heuristics, honestly labelled.** The ATS score is keyword coverage, not a real ATS
   parser. It's reproducible and useful for relative comparison — don't read it as a guarantee.
 
@@ -209,7 +251,8 @@ different project — which is rather the point of open-sourcing this one.
 server.js              Express server, endpoints, doc generation, Claude spawn helper
 ats.js                 Deterministic ATS keyword-coverage scorer
 public/                Vanilla JS frontend (index.html, app.js, style.css)
-.claude/commands/      Slash commands = the agent's business logic (tailor, prep, log, intake)
+.claude/commands/      Slash commands = the agent's business logic (onboard, tailor, prep, log, intake)
+CLAUDE.md.template     Blank, structured profile skeleton — copied/filled to create your CLAUDE.md
 landing/               Marketing one-pager
 ```
 
@@ -226,5 +269,6 @@ to the author. If you want to use it commercially, get in touch.
 
 ---
 
-*Built by [Yash Kulshreshtha](https://www.linkedin.com/in/yashkul). JobKit is a personal
-project; the resume content in this repo is illustrative.*
+*Built by [Yash Kulshreshtha](https://www.linkedin.com/in/yashkul) — an engineering leader based
+in Berlin. JobKit is a personal project; all profile and résumé data is generated per-user and kept
+private, so nothing personal ships in this repo.*

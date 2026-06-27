@@ -1,0 +1,112 @@
+# Job Search — <YOUR NAME>
+
+This is your **profile and grounding corpus** — the single source of truth JobKit reads before it
+tailors a resume, writes a cover letter, or preps you for an interview. The slash commands
+(`/tailor`, `/prep`, `/log`, `/intake`) read this file. Everything they produce is grounded in what
+you put here; if a fact isn't here (or in the base resumes under `resumes/`), the agent will not use
+it. Fill it in honestly — accuracy here is what keeps the output from hallucinating.
+
+> **How to fill this in:** the fastest path is the **Setup tab** in the JobKit UI (or run
+> `/onboard` in the terminal) and paste your CV / LinkedIn text — the agent drafts this whole file
+> for you. Then review and tighten every section. You can also fill it in by hand using the guidance
+> below. Replace every `<...>` placeholder. Delete guidance lines (the `>` blockquotes) once done, or
+> leave them — the agent ignores them.
+
+---
+
+## Snapshot
+> One tight block of identity facts. The `/tailor` name + contact lines come straight from here.
+- <Your Name> — <City, Country>. <Work authorisation / visa / right-to-work, if relevant>.
+- <phone> · <email> · <linkedin.com/in/you>
+- <Highest degrees, e.g. BSc Computer Science (Uni), MSc … (Uni)>. <N>+ years.
+- Currently <exact job title> at <Company> (<start>–present).
+- Languages: <language (level), language (level)> — state honest levels only.
+
+## Positioning
+> Who you are in one or two sentences, and how that flexes per role. Lead with your strongest
+> identity; name the secondary framings a JD might call for.
+- Core identity: <e.g. "Engineering Manager whose domain is X">.
+- Framing A (<role type>): foreground <themes>.
+- Framing B (<role type>): foreground <themes>.
+- Do NOT present as <a framing that isn't really you>.
+
+## Status / framing
+> How to present your situation. These rules are honoured by /tailor and /prep.
+- Present as currently <employed at X / open to work / …>. Never "ex-" or "former" if still there.
+- Notice period / availability: <how to handle it — e.g. "don't raise notice unless asked directly">.
+- Compensation: <your target / market range, or "competitive for the market"> — used as the /prep anchor.
+- Search strategy: <selective / wide; timeframe>.
+
+## Professional experience (titles are FIXED facts)
+> List every role you'd put on a resume, most recent first. The exact title here is locked — /tailor
+> will never upgrade or invent a different title. Add a one-line factual descriptor of each employer.
+- **<Exact title>** — <Company> (<start>–<end or Present>), <location>. *<one-line: what the company does>*
+- **<Exact title>** — <Company> (<dates>), <location>. *<descriptor>*
+- **<Exact title>** — <Company> (<dates>), <location>. *<descriptor>*
+
+## Achievement bank (facts — use, don't invent beyond these)
+> The heart of the corpus. Every concrete, verifiable accomplishment — with real metrics, tools, and
+> scope. Resume bullets are drawn ONLY from here (or your base resumes). Be specific: numbers, named
+> systems, technologies. The richer and more honest this is, the better every tailor gets.
+> Example shape (replace with your own):
+> - Led <scope: N teams / N services / N markets> doing <what>, achieving <metric>.
+> - Built <named system/tool>: <stack> — <impact, with a number>.
+> - <Hard, quantified win with the real tools named>.
+- <your achievement>
+- <your achievement>
+- <your achievement>
+
+### Stack
+> Your real tools/languages/platforms, grouped. Only what you've genuinely used — /tailor reorders
+> these per JD but never adds a tool that isn't here.
+- Languages: <…>
+- Platforms / cloud: <…>
+- <other relevant categories: testing, CI/CD, data, observability, …>
+
+### Selected projects / beyond the day job (optional)
+> Side projects, open source, portfolio pieces worth a line on a resume. Note honesty guardrails
+> (solo vs team, prototype vs production) so they're never inflated.
+- <project> — <one honest line>.
+
+## Target companies (tiers) (optional)
+- Dream: <…>
+- Strong fit: <…>
+- Solid: <…>
+
+## Voice rules
+> How your written materials should sound. The agent follows these for tone.
+- Resume: <e.g. crisp, metric-led>. Cover letter: <e.g. warm but professional>.
+- InMail: <constraints, e.g. <100 words, direct>.
+- Never use: <banned words/buzzwords>. Spelling: <British/EU or US>.
+
+## Apply / skip filter
+> The honest bar for whether a role is worth applying to. /tailor's verdict uses this. Be willing to
+> say SKIP.
+Strong fit if MOST hold: <criterion>, <criterion>, comp >= <number/range>, location <…>. Miss two or
+more → recommend SKIP and say why. Don't pad a weak fit.
+
+## Honesty rules
+- If a JD wants something you lack (a language, a specific domain), say so and suggest how to address
+  it or whether to skip. Never fabricate experience to close a gap.
+- Never invent a title, competency label, or skill that isn't in this file or the base resumes.
+- ATS / keyword score is never a justification for adding something untrue — name the gap instead.
+
+## Fabrication log
+> Specific phrasings, titles, or claims the agent must NEVER use about you — things that read well but
+> aren't true, or framings you've decided are off-limits. This grows as you catch and reject bad
+> output. /tailor reads this before drafting and treats everything here as banned.
+- Do NOT claim "<umbrella term you only partly have>" — you have <the real, narrower thing> only.
+- Do NOT title <role> anything other than "<exact title>".
+- <add entries here as you catch them>
+
+## Tailoring lessons (learned from submitted resumes — grows over time)
+> Generalisable framing/positioning lessons extracted from resumes you actually submitted. JobKit's
+> learning loop appends approved lessons here automatically; /tailor reads them so each application is
+> sharper than the last. Start empty.
+- <appended over time>
+
+---
+
+> **Resumes:** put at least one base resume in `resumes/` (PDF or DOCX). Name it for the role framing
+> it represents (e.g. `resume-em.pdf`, `resume-qa.pdf`). The agent reads the one that matches a JD's
+> lean and rebuilds from it. These are facts too — never invent beyond what they and this file contain.

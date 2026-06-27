@@ -37,7 +37,42 @@ function runClaude(prompt, timeoutMs = 480000) {
 }
 
 const safeName = n => /^[a-z0-9._-]+$/i.test(n);
-fs.mkdir(path.join(ROOT, 'output'), { recursive: true }).catch(() => {});
+
+// First-run scaffolding: ensure the data directories and an empty pipeline exist so a freshly
+// cloned checkout (no personal data — it's all gitignored) boots cleanly for a new user.
+const EMPTY_PIPELINE = `# Pipeline — live status
+
+| Company | Role | Tier | Stage | Warm contact | Next action | Updated |
+|---------|------|------|-------|--------------|-------------|---------|
+`;
+async function ensureScaffolding() {
+  for (const d of ['output', 'companies', 'resumes']) {
+    await fs.mkdir(path.join(ROOT, d), { recursive: true }).catch(() => {});
+  }
+  try {
+    await fs.access(path.join(ROOT, 'pipeline.md'));
+  } catch (_) {
+    await fs.writeFile(path.join(ROOT, 'pipeline.md'), EMPTY_PIPELINE).catch(() => {});
+  }
+}
+ensureScaffolding();
+
+// Onboarding state: a usable profile exists only when CLAUDE.md is present AND isn't just the
+// unfilled template (template still carries <YOUR NAME> / placeholder markers).
+async function getSetupStatus() {
+  let onboarded = false;
+  try {
+    const claude = await fs.readFile(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+    const looksLikeTemplate = claude.includes('<YOUR NAME>') || claude.includes('# Job Search — <');
+    onboarded = claude.trim().length > 0 && !looksLikeTemplate;
+  } catch (_) { /* no CLAUDE.md → not onboarded */ }
+  let hasResume = false;
+  try {
+    const files = await fs.readdir(path.join(ROOT, 'resumes'));
+    hasResume = files.some(f => /\.(pdf|docx)$/i.test(f));
+  } catch (_) { /* no resumes dir */ }
+  return { onboarded, hasResume };
+}
 
 function buildDocx(data) {
   const s = data.sections;
@@ -644,6 +679,59 @@ app.post('/api/intake', async (req, res) => {
     if (!notes) return res.status(400).json({ error: 'notes required' });
     const out = await runClaude('/intake ' + notes);
     res.json({ output: out });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Onboarding: report whether this checkout has a usable profile + base resume yet.
+app.get('/api/setup-status', async (req, res) => {
+  try {
+    res.json(await getSetupStatus());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Onboarding: turn an uploaded résumé (+ optional details) into a grounded CLAUDE.md via /onboard.
+// The résumé is also saved into resumes/ as the base resume, so the very next step (tailoring)
+// works without a separate upload. Guarded so it never clobbers an existing real profile.
+app.post('/api/onboard', async (req, res) => {
+  try {
+    const { onboarded } = await getSetupStatus();
+    if (onboarded) return res.status(409).json({ error: 'A profile already exists. Edit CLAUDE.md by hand to avoid overwriting it.' });
+
+    const { file_base64, file_ext, filename, notes, comp, work_auth, spelling, text } = req.body;
+    let resumeText = '', savedResume = null;
+
+    if (file_base64) {
+      const ext = (file_ext || '').toLowerCase();
+      if (ext !== 'pdf' && ext !== 'docx') return res.status(400).json({ error: 'résumé must be a PDF or DOCX file' });
+      const buf = Buffer.from(file_base64, 'base64');
+      resumeText = await extractResumeText(buf, ext);
+      // Save it as the base resume the tailor will read later.
+      let safe = (filename || ('resume-base.' + ext)).replace(/[^a-zA-Z0-9._-]/g, '_');
+      if (!/\.(pdf|docx)$/i.test(safe)) safe += '.' + ext;
+      await fs.mkdir(path.join(ROOT, 'resumes'), { recursive: true });
+      await fs.writeFile(path.join(ROOT, 'resumes', safe), buf);
+      savedResume = safe;
+    }
+
+    // Assemble the /onboard input: résumé text is the spine; the structured fields are confirmed
+    // facts that fill the gaps a CV can't (comp, work auth, spelling); notes/text are extra context.
+    const fields = [];
+    if (comp && comp.trim()) fields.push('- Compensation target / range: ' + comp.trim());
+    if (work_auth && work_auth.trim()) fields.push('- Work authorisation / location: ' + work_auth.trim());
+    if (spelling && spelling.trim()) fields.push('- Preferred spelling: ' + spelling.trim());
+    const extra = [(notes || '').trim(), (text || '').trim()].filter(Boolean).join('\n\n');
+
+    let input = '';
+    if (resumeText) input += 'RESUME (extracted from the uploaded file — primary source of truth):\n' + resumeText + '\n\n';
+    if (fields.length) input += 'CONFIRMED PROFILE DETAILS (provided directly by the user — treat as facts and use these to fill the matching sections; do NOT leave them as [ADD]):\n' + fields.join('\n') + '\n\n';
+    if (extra) input += 'EXTRA CONTEXT / NOTES FROM THE USER:\n' + extra + '\n';
+    input = input.trim();
+
+    if (!input) return res.status(400).json({ error: 'upload your résumé (PDF or DOCX), or add some career notes' });
+
+    const out = await runClaude('/onboard ' + input);
+    const status = await getSetupStatus();
+    res.json({ output: out, saved_resume: savedResume, ...status });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

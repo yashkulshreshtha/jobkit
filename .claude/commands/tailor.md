@@ -11,8 +11,8 @@ $ARGUMENTS
 
 KNOWN FACTS — user-supplied trusted input:
 If $ARGUMENTS contains a block delimited by `<<<KNOWN_FACTS` and `KNOWN_FACTS` (it follows a
-`--known-facts` flag), everything inside it is asserted true by Yash — facts he knows that are
-not yet in the achievement bank. Treat these EXACTLY like the achievement bank: trusted, usable
+`--known-facts` flag), everything inside it is asserted true by the candidate — facts they know
+that are not yet in the achievement bank. Treat these EXACTLY like the achievement bank: trusted, usable
 verbatim or rephrased, NOT subject to the fabrication guard below. Strip this block out of the JD
 text before parsing the JD in Step 1. Use these facts wherever they genuinely match the JD.
 
@@ -25,20 +25,20 @@ explicitly present in the CLAUDE.md achievement bank OR the KNOWN FACTS block ab
 than a fabrication.
 
 HARD RULES (override any desire to match the JD — breaking one is a failure, not a near-miss):
-1. TITLE LOCK. The job titles in PROFESSIONAL EXPERIENCE are FIXED facts — use them exactly as in
-   CLAUDE.md (Delivery Hero = "Engineering Manager / Quality Engineering Manager"; MayTek = "Principal
-   Software Consultant"; Atomants = "Head of Technology"). NEVER invent, upgrade, or swap a position
-   title to fit the JD (no "Staff Engineer", "Platform EM", "Principal Engineer", etc.). Only the
-   headline TITLE LINE at the very top is role-tunable; the titles inside the experience entries are not.
-2. NO RELABELLING. Describe each achievement as what it ACTUALLY is — do not recast it as a different
-   category of thing to match the JD. The QMI is a quality-metrics / reporting platform; it is NOT an
-   "internal developer platform", "Platform-as-a-Product", "CI/CD platform", or "DevEx platform". If the
-   JD wants X and I built Y, say Y honestly. Renaming Y into X is fabrication.
-3. NO UMBRELLA CLAIMS FROM A PART. If I have one piece of a named framework, name that piece — not the
-   umbrella. I have Change Failure Rate (one DORA metric) + a Regression Reliability Index; I do NOT have
-   "DORA metrics", "deployment frequency", or "lead time" unless the bank says so.
-4. NO INVENTED SCOPE/NUMBERS. Team/service/market figures come from the bank verbatim (17 product teams,
-   ~50 services, 30+ teams, 40+ markets). Never manufacture a new figure like "5+ feature teams".
+1. TITLE LOCK. The job titles in PROFESSIONAL EXPERIENCE are FIXED facts — use each one exactly as
+   written for that role in CLAUDE.md. NEVER invent, upgrade, or swap a position title to fit the JD
+   (no aspirational re-titling like "Staff Engineer", "Platform EM", or "Principal Engineer" unless
+   that is genuinely the candidate's title in CLAUDE.md). Only the headline TITLE LINE at the very top
+   is role-tunable; the titles inside the experience entries are not.
+2. NO RELABELLING. Describe each achievement as what it ACTUALLY is per CLAUDE.md — do not recast it as
+   a different category of thing to match the JD (e.g. don't rebrand a reporting/metrics tool as an
+   "internal developer platform" or "Platform-as-a-Product"). If the JD wants X and CLAUDE.md says I
+   built Y, say Y honestly. Renaming Y into X is fabrication.
+3. NO UMBRELLA CLAIMS FROM A PART. If CLAUDE.md gives me one piece of a named framework, name that
+   piece — not the umbrella. Check CLAUDE.md's "## Fabrication log" for specific umbrella claims that
+   are explicitly off-limits, and never assert the umbrella when the bank only supports a part.
+4. NO INVENTED SCOPE/NUMBERS. Team/service/market/scale figures come from the achievement bank in
+   CLAUDE.md verbatim. Never manufacture a new figure to fit the JD.
 5. A GAP IS REPORTED, NEVER WORN. A JD requirement I don't genuinely meet goes in Step 9 as a gap and
    appears NOWHERE in the profile, competencies, bullets, or skills — not via reframing, relabelling, an
    upgraded title, an umbrella-metric, or a borrowed buzzphrase. ATS/coverage score is never a reason to
@@ -52,7 +52,7 @@ responsibilities, requirements, benefits) before doing anything else. Use that f
 THE JD for every step below. If the fetch fails (e.g. login wall), stop and say so plainly —
 do not proceed with just the URL string as the JD.
 Extract: role title, company name and slug (lowercase-hyphens, e.g. "trade-republic"),
-EM vs QA lean, seniority, location, language requirement (flag if German required),
+role lean, seniority, location, language requirement (flag any non-English fluency the JD demands),
 8–10 must-have keywords, 3–4 nice-to-have keywords. Note today's date (YYYYMMDD).
 
 STEP 2 — RESEARCH (only if --research flag)
@@ -97,9 +97,12 @@ own words. Address a JD requirement only when I have genuine matching experience
 the bank, or companies/<slug>.md. A requirement I can't honestly match is a gap to report (Step 9),
 never a phrase to paste in.
 
-NAME LINE: Yash Kulshreshtha, B.Tech, MSc
-CONTACT: Berlin, Germany (German Permanent Resident) · +49 163 171 0329 · yashkulshreshtha@hotmail.com · linkedin.com/in/yashkul
-TITLE LINE: role-tuned, e.g. "QA Manager | Quality Engineering Leader | Test Automation"
+NAME LINE: the candidate's name (with degrees if listed) exactly as given in CLAUDE.md's "## Snapshot".
+CONTACT: the full contact line from CLAUDE.md's "## Snapshot" (location, work-authorisation if stated,
+phone, email, LinkedIn) — verbatim, never invented.
+TITLE LINE: role-tuned to this JD, built from the candidate's real positioning in CLAUDE.md (e.g. a
+QA-leaning JD → "QA Manager | Quality Engineering Leader | Test Automation"). Tune the words to the JD;
+never claim a seniority or specialism CLAUDE.md doesn't support.
 
 PROFILE (3–4 lines): Address the JD's top 3 must-haves — but describe the matching real experience
 in my own words; do NOT echo the JD's phrasing. Lead with scope + strongest differentiator.
@@ -108,36 +111,40 @@ CORE COMPETENCIES: Reorder to lead with what this JD values most, named in my ow
 from the base resume — do NOT copy the JD's exact phrases.
 
 PROFESSIONAL EXPERIENCE:
-Delivery Hero SE (Feb 2021–Present): 6–8 bullets from the achievement bank only — no invention.
-Reorder to lead with most relevant, described in my own wording. Do NOT lift phrases or sentence
+Use the candidate's real roles from CLAUDE.md and the base resume, in reverse-chronological order.
+Each role's title, company, dates, and location come from CLAUDE.md verbatim (TITLE LOCK applies).
+Give the current/most recent role the most space (typically 6–8 bullets); older roles get 3–4 bullets,
+as-is unless a direct JD match exists. All bullets come from the achievement bank only — no invention.
+Reorder bullets to lead with most relevant, described in my own wording. Do NOT lift phrases or sentence
 shapes from the JD.
 BANK COVERAGE RULE: before finalising, scan the WHOLE achievement bank and include every item
 genuinely relevant to this JD. Do NOT silently drop a relevant achievement to save space — if the
-2-page cap forces a cut, say so in Step 8 and name exactly what was cut and why. The exploratory
-testing practice, the QMI/CFR/RRI tooling, and the end-to-end data pipelines are high-value, commonly
-relevant items — check them explicitly every time. Every bullet must trace to the base resume,
-the achievement bank, or companies/<slug>.md; if it cannot, it is invention — drop it.
-Under each role header, include a one-line ITALIC company descriptor, e.g.
-*Global online food & grocery delivery platform — operating in 40+ markets.*
+2-page cap forces a cut, say so in Step 8 and name exactly what was cut and why. Check the candidate's
+signature, high-value achievements explicitly every time so none is missed. Every bullet must trace to
+the base resume, the achievement bank, or companies/<slug>.md; if it cannot, it is invention — drop it.
+Under each role header, include a one-line ITALIC company descriptor (a short, factual line about what
+that employer does), e.g. *Global online food & grocery delivery platform — operating in 40+ markets.*
 
 NOTE: the DOCX and HTML downloads now render from the saved markdown (Step 7) VERBATIM — nothing in
 the markdown is dropped, and nothing outside it appears. So write the saved markdown as the final,
 fully formatted resume: `# Name` first, then the title line, then the contact line, then `## Section`
 headings, `### Role · Company · dates | location` per role, the italic descriptor, then `- ` bullets.
-MayTek (May 2019–Dec 2020): 3–4 bullets, as-is unless a direct JD match exists.
-Atomants (Jun 2013–Apr 2019): 3–4 bullets including Red Herring Top 100 Asia 2014.
+Older roles (everything before the most recent): 3–4 bullets each, as-is unless a direct JD match
+exists. Where the bank ties a notable award/recognition to a role, include it.
 
 EDUCATION:
-MSc Computer Science — University of Essex, Colchester, UK (2011–2013)
-B.Tech Computer Science & Engineering — Amity University, Noida, India (2007–2011)
+Each degree, institution, location, and period from CLAUDE.md / the base resume, verbatim.
 
-TECHNICAL SKILLS: Reorder each section to lead with the JD's priority stack. Keep all sections:
-Test Automation · Languages & Platforms · CI/CD & DevOps · Test Analytics & Reporting ·
-Observability & Cloud · Device & Compatibility · Practices
+TECHNICAL SKILLS: Reorder each section to lead with the JD's priority stack. Use the skill categories
+that fit the candidate's field as reflected in CLAUDE.md / the base resume (for a quality/engineering
+profile these are typically: Test Automation · Languages & Platforms · CI/CD & DevOps · Test Analytics
+& Reporting · Observability & Cloud · Device & Compatibility · Practices). Keep every category the base
+resume uses; only the tools listed in CLAUDE.md / the base resume may appear — never add a tool to match
+the JD.
 
 LANGUAGES & RECOGNITION:
-English (fluent), German (working towards B1), Hindi (native)
-Red Herring Top 100 Asia Winner (2014) · Published research: 3D stereo fields in VoIP (University of Essex) · Visa: German Permanent Resident
+Languages with the honest proficiency levels from CLAUDE.md; any awards/recognition and work
+authorisation the bank lists — verbatim, never inflated.
 
 Important: do NOT print the full resume in your response prose. It is saved via RESUME_JSON
 and read from file by the UI. Your printed response output should contain only the analysis
@@ -156,12 +163,12 @@ Report: "Coverage: X/10 requirements demonstrated — ~Y%". Anything not honestl
 for Step 9, not phrasing to paste in.
 
 STEP 6 — QUALITY CHECKS
-Quantification: flag any Delivery Hero bullet with no metric. Add one from the
-achievement bank if available. Report: "X/Y DH bullets have metrics."
+Quantification: flag any bullet in the current/most recent role with no metric. Add one from the
+achievement bank if available. Report: "X/Y current-role bullets have metrics."
 Action verbs: rewrite any bullet starting with: responsible for, worked on, helped,
 assisted, involved in, supported. Replace with strong past-tense verbs.
-2-page cap: estimate page count at 11pt Arial. If over 2 pages, trim lowest-priority
-DH bullets first, then MayTek/Atomants if still over. Note cuts made.
+2-page cap: estimate page count at 11pt Arial. If over 2 pages, trim lowest-priority bullets from the
+current role first, then from older roles if still over. Note cuts made.
 
 STEP 6B — HONESTY SELF-AUDIT (do this before saving; report PASS/FAIL on each line)
 Audit the drafted resume against the HARD RULES and WORDING RULE. Report each:
@@ -193,8 +200,8 @@ Then output this JSON block exactly between the markers (server uses it to build
   "jd_text": "<first 800 characters of the JD text, cleaned of newlines>",
   "filename": "resume-<slug>-<YYYYMMDD>",
   "sections": {
-    "name": "Yash Kulshreshtha, B.Tech, MSc",
-    "contact": "Berlin, Germany (German Permanent Resident) · +49 163 171 0329 · yashkulshreshtha@hotmail.com · linkedin.com/in/yashkul",
+    "name": "<candidate name, with degrees if listed, from CLAUDE.md>",
+    "contact": "<full contact line from CLAUDE.md — location, work-auth, phone, email, LinkedIn>",
     "title": "<tailored title line>",
     "profile": "<profile paragraph as single string>",
     "competencies": ["<item>", "<item>"],
@@ -241,11 +248,13 @@ Then output this JSON block for detailed highlighting (best effort):
 
 STEP 9 — GAPS
 List JD requirements not clearly met. Honest, not encouraging.
-Flag explicitly if German proficiency at B1 or above is required or strongly preferred (still working towards B1).
+Flag explicitly if the JD requires or strongly prefers a language proficiency the candidate doesn't yet
+have per CLAUDE.md (state the candidate's real level; never overstate it on paper).
 
 STEP 10 — COVER LETTER (only if --cover-letter flag)
 ~180 words in my voice. One specific true reason for this company.
-Note I am at Delivery Hero on 3-month notice.
+Follow any status/framing rules in CLAUDE.md (e.g. how to present employment status or notice period;
+some candidates prefer not to raise notice unless asked).
 Save as output/cover-letter-<slug>-<YYYYMMDD>.md
 Output: <!-- SAVED_CL: output/cover-letter-<slug>-<YYYYMMDD>.md -->
 

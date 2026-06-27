@@ -28,6 +28,7 @@
     <button class="tab" data-tab="prep">Prep</button>
     <button class="tab" data-tab="log">Log</button>
     <button class="tab" data-tab="intake">Intake</button>
+    <button class="tab" data-tab="setup">Setup</button>
   </nav>
   <div class="status-dot" id="status-dot" title="ready"></div>
 </header>
@@ -174,6 +175,56 @@
       <div class="row"><h3>Result</h3><button class="ghost" data-clear="intake">Clear</button></div>
       <div class="rendered" id="intake-out"></div>
     </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="panel" id="panel-setup">
+    <div class="panel-header"><div class="panel-title">Setup — your profile</div></div>
+    <div id="setup-welcome" class="hint" hidden style="padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid #6d4aff;border-radius:var(--radius-sm);margin-bottom:14px">
+      <strong>Welcome to JobKit.</strong> Before you can tailor or prep, JobKit needs your profile.
+      Paste your CV or LinkedIn below and it'll draft your <code>CLAUDE.md</code> — the grounding
+      corpus everything else reads from.
+    </div>
+    <p class="hint">JobKit grounds every resume, cover letter and prep pack in <code>CLAUDE.md</code> — your verified achievements, positioning and honesty rules. Upload your résumé and JobKit drafts it for you. Nothing is invented — anything it can't confirm is flagged for you to review. The file you upload also becomes your base résumé, so you can tailor straight away.</p>
+
+    <label>Your résumé <span style="opacity:.6;font-weight:400">— PDF or DOCX (required)</span></label>
+    <label class="file-pick-label" id="setup-file-label" for="setup-file">Choose your résumé…</label>
+    <input type="file" id="setup-file" accept=".pdf,.docx" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" />
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <div style="flex:1;min-width:200px">
+        <label>Target comp / range <span style="opacity:.6;font-weight:400">(optional)</span></label>
+        <input type="text" id="setup-comp" placeholder="e.g. £90–110k, or 'competitive'" />
+      </div>
+      <div style="flex:1;min-width:200px">
+        <label>Work authorisation / location <span style="opacity:.6;font-weight:400">(optional)</span></label>
+        <input type="text" id="setup-workauth" placeholder="e.g. UK citizen · London / remote-EU" />
+      </div>
+      <div style="flex:0 0 170px">
+        <label>Spelling <span style="opacity:.6;font-weight:400">(optional)</span></label>
+        <select id="setup-spelling">
+          <option value="">—</option>
+          <option value="British/EU">British / EU</option>
+          <option value="US">US</option>
+        </select>
+      </div>
+    </div>
+
+    <label style="margin-top:12px">Anything not on your CV? <span style="opacity:.6;font-weight:400">(optional)</span></label>
+    <textarea id="setup-notes" rows="6" placeholder="Quantified wins missing from the résumé, positioning, target companies, side projects, voice preferences…"></textarea>
+
+    <div class="row" style="margin-top:12px"><button class="primary" id="setup-run">Generate my profile</button></div>
+    <div class="progress-bar" id="setup-progress" hidden>
+      <div class="progress-spinner"></div>
+      <span id="setup-progress-text">Building your CLAUDE.md… (~30–60s)</span>
+    </div>
+    <div class="output-block" id="setup-out-wrap" hidden>
+      <div class="row"><h3>Result</h3><button class="ghost" data-clear="setup">Clear</button></div>
+      <div class="rendered" id="setup-out"></div>
+    </div>
+    <p class="hint" id="setup-resume-hint" style="margin-top:14px">
+      The résumé you upload is saved as your base résumé automatically — once your profile is generated, head straight to the Tailor tab.
+    </p>
   </section>
 
   <!-- COMPANIES -->

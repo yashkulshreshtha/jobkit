@@ -56,9 +56,8 @@ notes (what to emphasise, what to leave for them to ask). This is the one thing 
 **2. The frame** — who I am for THIS role in one line; the anchor sentence I return to; one
 memorable line I can land if it fits; my superpower vs my one risk for this specific role.
 
-**3. STAR stories to have ready** — pick the 4–6 from the achievement bank that fit this role
-(QMI/IDP, CFR/RRI, ~65% AI test-gen, market migrations, scaling to 50, +35% turnaround — only the
-true and relevant ones). Write each one FULLY: **Prompt fits** (which questions it answers) ·
+**3. STAR stories to have ready** — pick the 4–6 from the achievement bank that fit this role (only the
+true and relevant ones; favour the candidate's signature, high-impact achievements). Write each one FULLY: **Prompt fits** (which questions it answers) ·
 **Situation** · **Task** · **Action** (concrete, with the real tools/metrics) · **Result** (numbers)
 · **What I'd do differently** · **Why it works for this company**. Lead with the strongest. These
 recombine to cover most behavioural questions.
@@ -77,8 +76,9 @@ understand it, give an honest framing script as a quote block, and a "what to re
 (≤1 hour)" list of specific things to skim so I don't look ignorant. Never fabricate to fill a gap —
 name it and bridge it honestly. If no JD text is available (not in companies/<name>.md or anywhere),
 say so explicitly at the top of this section and flag that the gap analysis is inferred, not a true
-JD-vs-CV diff — then ask for the JD. Comp: anchor Berlin EM market ≥ ~€100k or "competitive for
-Berlin EM". Never raise notice period unless asked directly.
+JD-vs-CV diff — then ask for the JD. Comp: anchor to the candidate's target/market range as stated in
+CLAUDE.md (or "competitive for the market" if none given). Follow CLAUDE.md's rules on notice period and
+employment status — never raise notice unless asked directly if CLAUDE.md says so.
 
 When a gap is a specific named tool I lack (e.g. Backstage, Tyk), explain what that tool IS right
 there in the gap entry — what it does, why they use it, how it relates to what I've built — so I
@@ -109,7 +109,7 @@ Teach me to think, not memorise. State the pattern up front and use it for every
 - **Requirements** — functional and non-functional, as a short table (requirement · what it means ·
   design decision and why).
 - **Components / services** — a table of each service: what it is · why I pick it · what breaks
-  without it (and the GCP/AWS equivalent if a cloud is named, since I know GCP).
+  without it (map to the cloud named in the JD, and to the cloud(s) the candidate knows per CLAUDE.md).
 - **Architecture** — a box-and-arrow sketch in text or a mermaid diagram, then "why each layer
   exists" (entry, service, storage, support, cross-cutting).
 - **Key flows** — the main paths (e.g. write/upload, read/share) step by step; for each step say

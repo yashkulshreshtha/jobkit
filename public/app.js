@@ -1178,6 +1178,69 @@ $('#intake-run').addEventListener('click', () => {
     outId: '#intake-out', wrapId: '#intake-out-wrap', busyLabel: 'ingesting…' });
 });
 
+// ── SETUP / ONBOARDING ───────────────────────────────────────────────────────
+async function refreshSetupState() {
+  try {
+    const s = await api('/api/setup-status');
+    const welcome = $('#setup-welcome');
+    if (welcome) welcome.hidden = s.onboarded;
+    return s;
+  } catch (_) { return { onboarded: true, hasResume: true }; }
+}
+
+const _setupFile = $('#setup-file');
+if (_setupFile) _setupFile.addEventListener('change', function () {
+  const lbl = $('#setup-file-label');
+  if (lbl) lbl.textContent = this.files[0] ? this.files[0].name : 'Choose your résumé…';
+});
+
+$('#setup-run').addEventListener('click', async () => {
+  if (busy) return;
+  const file = $('#setup-file').files[0];
+  const notes = $('#setup-notes').value.trim();
+  if (!file && !notes) return setStatus('Upload your résumé (PDF or DOCX) first', 'error');
+  const progress = $('#setup-progress');
+  try {
+    setBusy(true, 'building profile…');
+    if (progress) progress.hidden = false;
+    const body = {
+      notes,
+      comp: $('#setup-comp').value.trim(),
+      work_auth: $('#setup-workauth').value.trim(),
+      spelling: $('#setup-spelling').value,
+    };
+    if (file) {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+      body.file_base64 = btoa(binary);
+      body.file_ext = file.name.split('.').pop().toLowerCase();
+      body.filename = file.name;
+    }
+    const data = await api('/api/onboard', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    $('#setup-out-wrap').hidden = false;
+    render('#setup-out', data.output || 'Profile generated.');
+    await refreshSetupState();
+    const hint = $('#setup-resume-hint');
+    if (hint && data.saved_resume) {
+      hint.innerHTML = '✓ Saved <code>' + data.saved_resume + '</code> as your base résumé. Review your profile above, then head to the Tailor tab.';
+    }
+    setStatus(data.onboarded ? 'Profile created — review it, then tailor' : 'ready');
+    await loadPipeline(); await loadCompanies();
+  } catch (e) {
+    setStatus('Error: ' + e.message, 'error');
+    $('#setup-out-wrap').hidden = false;
+    render('#setup-out', '**Error:** ' + e.message);
+  } finally {
+    setBusy(false);
+    if (progress) progress.hidden = true;
+  }
+});
+
 // Copy + clear
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-copy]');
@@ -1213,6 +1276,12 @@ document.addEventListener('click', e => {
     if (k === 'prep') { $('#prep-round').value = ''; $('#prep-out-wrap').hidden = true; const pdl = document.getElementById('prep-dl'); if (pdl) pdl.hidden = true; }
     if (k === 'log') { $('#log-note').value = ''; $('#log-company-new').value = ''; $('#log-out-wrap').hidden = true; }
     if (k === 'intake') { $('#intake-notes').value = ''; $('#intake-out-wrap').hidden = true; }
+    if (k === 'setup') {
+      $('#setup-file').value = ''; $('#setup-notes').value = '';
+      $('#setup-comp').value = ''; $('#setup-workauth').value = ''; $('#setup-spelling').value = '';
+      const lbl = $('#setup-file-label'); if (lbl) lbl.textContent = 'Choose your résumé…';
+      $('#setup-out-wrap').hidden = true;
+    }
   }
 });
 
@@ -1452,3 +1521,5 @@ document.getElementById('add-selected-context').addEventListener('click', async 
 stopProgress();
 loadPipeline();
 loadCompanies();
+// First-run gate: if there's no profile yet, land the user on Setup.
+refreshSetupState().then(s => { if (!s.onboarded) switchToTab('setup'); });

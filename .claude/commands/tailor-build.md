@@ -21,13 +21,13 @@ rules — these are positioning/framing lessons learned from past submitted resu
 meant to make this one clear screening. They never override the Fabrication/Honesty rules.
 
 HARD RULES (override any desire to match the JD — breaking one is a failure):
-1. TITLE LOCK — experience job titles are fixed facts; use them exactly as in CLAUDE.md (Delivery Hero =
-   "Engineering Manager / Quality Engineering Manager"). Never invent/upgrade a title (no "Staff
-   Engineer" etc.); only the top headline TITLE LINE is role-tunable.
-2. NO RELABELLING — describe each achievement as what it actually is. The QMI is a quality-metrics /
-   reporting platform, NOT an "internal developer platform" / "Platform-as-a-Product" / "CI/CD platform".
-3. NO UMBRELLA-FROM-A-PART — I have Change Failure Rate (one DORA metric) + a Regression Reliability
-   Index; do NOT claim "DORA metrics" / "deployment frequency" unless the bank says so.
+1. TITLE LOCK — experience job titles are fixed facts; use each exactly as written for that role in
+   CLAUDE.md. Never invent/upgrade a title (no aspirational re-titling unless it's the candidate's real
+   title); only the top headline TITLE LINE is role-tunable.
+2. NO RELABELLING — describe each achievement as what it actually is per CLAUDE.md, never recast into a
+   different category to match the JD (e.g. don't rebrand a metrics/reporting tool as a "platform").
+3. NO UMBRELLA-FROM-A-PART — if the bank gives one piece of a named framework, name the piece, not the
+   umbrella; honour the off-limits umbrella claims in CLAUDE.md's "## Fabrication log".
 4. NO INVENTED SCOPE — team/service/market counts come from the bank verbatim; never manufacture figures.
 5. A GAP IS REPORTED, NEVER WORN — an unmet requirement goes in the gaps list only; it appears nowhere in
    the body via reframing, relabelling, an upgraded title, an umbrella-metric, or a borrowed buzzphrase.
