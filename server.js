@@ -100,21 +100,39 @@ async function learnInBackground(company, note) {
   } catch (e) { console.error('[learn] background error:', e.message); }
 }
 
-// DETERMINISTIC scan of a submitted resume for Fabrication-log violations — does NOT rely on the LLM
-// (which proved unreliable at catching these even with full visibility). Catches e.g. a resume that
-// writes German as "B1" when the rule is "working towards B1", or reintroduces Kafka/Staff Engineer.
+// DETERMINISTIC scan of a submitted resume for fabrication-log violations — does NOT rely on the LLM
+// (which proved unreliable at catching these even with full visibility, e.g. a resume that writes a raw
+// German CEFR level, or reintroduces a banned tech/title). The PERSONAL rules live in a private,
+// gitignored config (`fabrication-patterns.json`) so the public code ships only the generic mechanism —
+// see `fabrication-patterns.example.json` for the format. Missing/invalid config → no extra checks.
+let _fabPatterns = null;
+function loadFabPatterns() {
+  if (_fabPatterns) return _fabPatterns;
+  _fabPatterns = [];
+  try {
+    const arr = JSON.parse(require('fs').readFileSync(path.join(ROOT, 'fabrication-patterns.json'), 'utf8'));
+    if (Array.isArray(arr)) for (const p of arr) {
+      try {
+        _fabPatterns.push({
+          re: new RegExp(p.pattern, p.flags || 'i'),
+          unless: p.unless ? new RegExp(p.unless, p.flags || 'i') : null,
+          rule: String(p.rule || ''),
+          why: String(p.why || ''),
+        });
+      } catch (e) { console.error('[fab-patterns] skipped a bad rule:', e.message); }
+    }
+  } catch (e) { /* no config (e.g. a fresh public clone) — generic mechanism, no personal rules */ }
+  return _fabPatterns;
+}
+
 function scanFabricationConflicts(text) {
   const t = text || '';
   const hits = [];
-  const push = (re, rule, why) => { const m = t.match(re); if (m) hits.push({ in_resume: m[0].trim().replace(/\s+/g, ' '), rule, why }); };
-  if (/german[^.\n]*\bB[12]\b/i.test(t) && !/working towards b1/i.test(t))
-    push(/german[^.\n]*\bB[12]\b[^.\n]*/i, 'German must use the fabrication-log CEFR phrasing — never a raw level on paper',
-      'Keep the mandated "working towards" phrasing; never put a raw CEFR level or exam date on a resume.');
-  push(/\bKafka\b/i, 'Event-driven stack is SQS (AWS) + Pub/Sub, not Kafka', 'Kafka is banned — the real stack is SQS.');
-  push(/\bStaff Engineer\b/i, 'Delivery Hero title is fixed: "Engineering Manager / Quality Engineering Manager"', 'Never title the role "Staff Engineer".');
-  push(/\bSpring Boot\b/i, 'Spring Boot is a banned framing', 'Not in the achievement bank.');
-  push(/DORA metrics|deployment frequency/i, 'Name CFR + Regression Reliability Index, never "DORA metrics" / "deployment frequency"', 'The bank tracks CFR + a Regression Reliability Index, not the full DORA set.');
-  push(/internal developer platform/i, 'QMI is a quality-metrics platform, not an "internal developer platform"', 'Do not relabel the QMI.');
+  for (const p of loadFabPatterns()) {
+    if (p.unless && p.unless.test(t)) continue; // negative guard (e.g. "working towards b1" present → ok)
+    const m = t.match(p.re);
+    if (m) hits.push({ in_resume: m[0].trim().replace(/\s+/g, ' '), rule: p.rule, why: p.why });
+  }
   return hits;
 }
 const dedupeConflicts = arr => {

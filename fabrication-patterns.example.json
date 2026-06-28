@@ -1,0 +1,16 @@
+[
+  {
+    "_comment": "Copy this file to fabrication-patterns.json (gitignored) and fill in YOUR rules. The deterministic scanner flags a submitted resume that reintroduces a phrasing your CLAUDE.md fabrication log forbids — caught reliably without an LLM. Each entry:",
+    "pattern": "\\bsome banned term\\b",
+    "flags": "i",
+    "unless": "optional negative guard — if THIS phrase is present, suppress the flag",
+    "rule": "Short statement of the rule this term breaks",
+    "why": "One line shown to you explaining why the submitted resume is likely the error"
+  },
+  {
+    "pattern": "\\bAnotherBannedTechName\\b",
+    "flags": "i",
+    "rule": "We use X, not AnotherBannedTechName",
+    "why": "AnotherBannedTechName never appeared in our stack — it's a fabrication."
+  }
+]
