@@ -918,10 +918,15 @@ app.post('/api/companies/:name/close', async (req, res) => {
     const coPath = path.join(ROOT, 'companies', name + '.md');
     let content = await fs.readFile(coPath, 'utf8');
     const date = new Date().toISOString().slice(0,10);
-    const entry = `- ${date} | Status: ${outcome || 'Closed'}`;
-    content = content.replace(/^- (Tier|Stage):.*/m, match => match);
+    const out = (outcome || 'Closed').trim();
+    // The pipeline UI only buckets a row as Closed when the stage text matches
+    // /reject|declined|closed|filled|withdraw/. Free-text outcomes the prompt itself
+    // suggests (e.g. "Withdrew", "No response", "Not pursuing") don't match, so a closed
+    // row would wrongly stay in the active funnel. Guarantee a Closed-bucket stage here.
+    const closedStage = /reject|declined|closed|filled|withdraw/i.test(out) ? out : `Closed — ${out}`;
+    const entry = `- ${date} | Status: ${out}`;
     if (content.match(/^- Stage:/m)) {
-      content = content.replace(/^(- Stage:.*)/m, `- Stage: ${outcome || 'Closed'}`);
+      content = content.replace(/^(- Stage:.*)/m, `- Stage: ${closedStage}`);
     }
     if (content.includes('## Process log')) {
       content = content.replace(/## Process log\n/, `## Process log\n${entry}\n`);
@@ -930,7 +935,7 @@ app.post('/api/companies/:name/close', async (req, res) => {
 
     const pipelinePath = path.join(ROOT, 'pipeline.md');
     let pipeline = await fs.readFile(pipelinePath, 'utf8');
-    pipeline = updatePipelineStage(pipeline, name, outcome || 'Closed');
+    pipeline = updatePipelineStage(pipeline, name, closedStage);
     await fs.writeFile(pipelinePath, pipeline);
 
     res.json({ ok: true });
@@ -1003,6 +1008,25 @@ app.get('/api/companies/:name/jd', async (req, res) => {
   } catch (e) {
     res.json({ content: '', filename: null });
   }
+});
+
+// Save a manually-pasted JD for a company (recovers cases where capture only stored a
+// URL, e.g. auth-walled LinkedIn postings). Writes output/<name>/jd-<today>.md so /prep
+// and /tailor can ground on the real text.
+app.post('/api/companies/:name/jd', async (req, res) => {
+  if (!safeName(req.params.name)) return res.status(400).json({ error: 'bad name' });
+  const jd = (req.body.jd || '').trim();
+  if (jd.length < 40) return res.status(400).json({ error: 'jd text required' });
+  try {
+    const name = req.params.name;
+    const coDir = path.join(ROOT, 'output', name);
+    await fs.mkdir(coDir, { recursive: true });
+    const today = new Date().toISOString().slice(0, 10);
+    const title = (req.body.title || '').trim();
+    const header = `# JD — ${title || name} — ${name}\n_Captured ${today} (pasted)_\n\n`;
+    await fs.writeFile(path.join(coDir, 'jd-' + today.replace(/-/g, '') + '.md'), header + jd);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/rebuild-resume', async (req, res) => {

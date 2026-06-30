@@ -65,7 +65,7 @@ Eight tabs, each backed by an endpoint in `server.js`:
 |---|---|
 | **Setup** | First-run onboarding. Upload your résumé (PDF/DOCX) — plus optional comp/location and any wins not on the CV → JobKit drafts your `CLAUDE.md` profile (achievement bank, positioning, honesty rules), grounded only in what you provide, with anything it can't confirm flagged for review. The upload also becomes your base résumé. |
 | **Pipeline** | `pipeline.md` rendered as live status cards — every company, stage, and next action in one view. |
-| **Companies** | Per-company notes and generated files. Upload your *actually-submitted* resume, mark sent, log entries, close/withdraw, delete. |
+| **Companies** | Searchable master–detail view of every company — notes, generated files and the captured JD in one pane. Upload your *actually-submitted* resume, mark sent, log entries, close, delete. A failed JD capture (e.g. an auth-walled link that only stored a URL) is detected and offers inline paste-to-recover, so prep and tailor always have the real text. |
 | **Check Match** | Paste a JD → fast APPLY / MAYBE / SKIP verdict with reasoning, against an honest fit filter (comp, scope, language, location). Triage before you invest in a full tailor. |
 | **Tailor** | Paste a JD → grounded, fully-tailored resume + an optional cover letter, a deterministic ATS keyword score, and one-click **DOCX / HTML** download. |
 | **Prep** | Generate a multi-page interview-prep pack for a specific company and round, built from the real JD ↔ CV gap. |

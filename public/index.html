@@ -234,9 +234,13 @@
       <button class="ghost btn-sm" id="companies-refresh">Refresh</button>
     </div>
 
-    <div id="company-list"></div>
+    <div class="co-layout">
+      <aside class="co-sidebar">
+        <input id="company-search" class="co-search" type="text" placeholder="Search companies…" autocomplete="off" />
+        <div id="company-list"></div>
+      </aside>
 
-    <div id="company-detail" hidden style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+    <div id="company-detail" class="co-detail" hidden>
       <div class="panel-header" style="margin-bottom:16px">
         <div class="panel-title" id="company-detail-name"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
@@ -334,6 +338,7 @@
       <div class="section-sublabel">Notes &amp; process log</div>
       <div class="rendered" id="company-view"></div>
       <textarea id="company-edit-area" rows="22" hidden></textarea>
+    </div>
     </div>
   </section>
 </main>

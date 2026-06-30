@@ -79,11 +79,29 @@ function stageBadgeClass(stage) {
 function stageCategory(stage) {
   const s = (stage || '').toLowerCase();
   if (/offer/.test(s)) return 'offer';
-  if (/reject|declined|closed|filled|withdraw/.test(s)) return 'closed';
+  if (/reject|declined|closed|filled|withdr/.test(s)) return 'closed';
   if (/screen|assessment|take-?home|profile|coding test|online test|exam/.test(s)) return 'screening';
   if (/round|interview|technical|onsite|panel|hiring manager|final|loop|recruiter/.test(s)) return 'interviewing';
   if (/submitted|applied|waiting|pending|awaiting/.test(s)) return 'submitted';
   return 'other';
+}
+
+// Whole days between a YYYY-MM-DD date and today. null if unparseable.
+function daysSince(dateStr) {
+  const m = /(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || '');
+  if (!m) return null;
+  const then = new Date(+m[1], +m[2] - 1, +m[3]);
+  if (isNaN(then)) return null;
+  const today = new Date();
+  return Math.floor((today - then) / 86400000);
+}
+
+// A row is "stale" when it's still Submitted (no response yet) and hasn't moved in 30+ days.
+const STALE_DAYS = 30;
+function staleDays(row) {
+  if (stageCategory(row['stage']) !== 'submitted') return null;
+  const d = daysSince(row['updated']);
+  return d !== null && d >= STALE_DAYS ? d : null;
 }
 
 function renderPipeline(md) {
@@ -185,12 +203,19 @@ function renderPipelineView() {
     const badge   = stageBadgeClass(stage);
     const tierSpan = tier && tier !== '—' ? `<span class="pl-tier">${tier}</span>` : '';
     const nextLine = next && next !== '—' ? `<div class="pl-next"><span class="pl-next-label">Next</span> ${next}</div>` : '';
+    const stale   = staleDays(row);
+    const staleLine = stale !== null
+      ? `<div class="pl-stale">stale · ${stale}d no response
+           <button class="pl-close-btn" data-slug="${slugify(company)}" type="button">Close</button>
+         </div>`
+      : '';
 
-    html += `<div class="pl-row" data-slug="${slugify(company)}" role="button" tabindex="0">
+    html += `<div class="pl-row${stale !== null ? ' is-stale' : ''}" data-slug="${slugify(company)}" role="button" tabindex="0">
       <div class="pl-main">
         <div class="pl-co">${company}${tierSpan}</div>
         <div class="pl-role">${role}</div>
         ${nextLine}
+        ${staleLine}
       </div>
       <div class="pl-side">
         <span class="stage-badge ${badge}">${stage}</span>
@@ -217,6 +242,27 @@ function renderPipelineView() {
     renderPipelineView();
     const el = document.getElementById('pl-search');
     if (el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; }
+  });
+
+  // stale "Close" button → close as "no response" (won't trigger the card navigation)
+  container.querySelectorAll('.pl-close-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const slug = btn.dataset.slug;
+      if (!window.confirm('Close this application as "no response"?')) return;
+      btn.disabled = true;
+      try {
+        await api('/api/companies/' + encodeURIComponent(slug) + '/close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outcome: 'no response' })
+        });
+        await loadPipeline();
+      } catch (err) {
+        btn.disabled = false;
+        setStatus('Close error: ' + err.message, 'error');
+      }
+    });
   });
 
   // row click → company tab
@@ -281,6 +327,8 @@ async function loadPipeline() {
     const { content, appliedDates } = await api('/api/pipeline');
     _appliedDates = appliedDates || {};
     renderPipeline(content);
+    // Pipeline rows feed the Companies sidebar stage badges — refresh it now that they're loaded.
+    if (_companyNames.length) renderCompanyList();
   } catch (e) {
     document.getElementById('pipeline-view').textContent = 'Error: ' + e.message;
   }
@@ -305,33 +353,48 @@ async function loadCompanies() {
     if (prepSel) { prepSel.innerHTML = opts; if (prepPrev) prepSel.value = prepPrev; }
     if (logSel)  { logSel.innerHTML  = '<option value="">— pick —</option>' + opts; if (logPrev) logSel.value = logPrev; }
 
-    const list = document.getElementById('company-list');
-    if (!list) return;
-    if (!companies.length) {
-      list.innerHTML = '<p class="hint">No companies yet. Use Intake to add one.</p>';
-      return;
-    }
-    list.className = 'co-list';
-    list.innerHTML = companies.map(n =>
-      `<div class="co-card" data-name="${n}" role="button" tabindex="0">
-        <div>
-          <div class="co-card-name">${n.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
-          <div class="co-card-sub">${n}</div>
-        </div>
-        <svg class="co-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-      </div>`
-    ).join('');
-
-    list.querySelectorAll('.co-card').forEach(card => {
-      card.addEventListener('click', () => activateCompany(card.dataset.name));
-    });
+    _companyNames = companies;
+    renderCompanyList();
 
     const toSelect = window._activeCompany && companies.includes(window._activeCompany)
       ? window._activeCompany : companies[0];
     if (toSelect) activateCompany(toSelect);
 
   } catch(e) { console.error('loadCompanies error:', e); }
+}
+
+let _companyNames = [];
+let _companySearch = '';
+
+// Look up a company's current stage from the cached pipeline rows (for the sidebar badge).
+function companyStage(slug) {
+  const row = (_pipelineRows || []).find(r => slugify(r['company'] || '') === slug);
+  return row ? (row['stage'] || '') : '';
+}
+
+function renderCompanyList() {
+  const list = document.getElementById('company-list');
+  if (!list) return;
+  list.className = 'co-list';
+  const q = _companySearch.trim().toLowerCase();
+  const shown = _companyNames.filter(n => !q || n.replace(/-/g, ' ').toLowerCase().includes(q));
+  if (!_companyNames.length) {
+    list.innerHTML = '<p class="co-empty">No companies yet. Use Intake to add one.</p>';
+    return;
+  }
+  if (!shown.length) { list.innerHTML = '<p class="co-empty">No matches.</p>'; return; }
+  list.innerHTML = shown.map(n => {
+    const stage = companyStage(n);
+    const badge = stage ? `<span class="co-card-stage stage-badge ${stageBadgeClass(stage)}">${stageCategory(stage)}</span>` : '';
+    return `<div class="co-card${n === window._activeCompany ? ' active' : ''}" data-name="${n}" role="button" tabindex="0">
+      <div class="co-card-name">${n.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+      ${badge}
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.co-card').forEach(card => {
+    card.addEventListener('click', () => activateCompany(card.dataset.name));
+    card.addEventListener('keydown', e => { if (e.key === 'Enter') activateCompany(card.dataset.name); });
+  });
 }
 
 function activateCompany(name) {
@@ -492,19 +555,54 @@ async function loadCompany(name) {
   const jdSection = document.getElementById('company-jd-section');
   const jdBody    = document.getElementById('company-jd-body');
   const jdMeta    = document.getElementById('company-jd-meta');
+  const jdDetails = jdSection && jdSection.querySelector('.jd-details');
   try {
-    const { content, filename } = await api('/api/companies/' + encodeURIComponent(name) + '/jd');
-    if (content && content.trim()) {
-      // strip our "# JD — … / _Captured …_" header lines from the displayed body
-      const body = content.replace(/^#[^\n]*\n+(_[^\n]*_\n+)?/, '');
-      _activeJdText = body.trim();
+    const { content } = await api('/api/companies/' + encodeURIComponent(name) + '/jd');
+    const raw  = content || '';
+    // strip our "# JD — … / _Captured …_" header lines from the displayed body
+    const body = raw.replace(/^#[^\n]*\n+(_[^\n]*_\n+)?/, '').trim();
+    const bareUrl = body.match(/^(https?:\/\/\S+)$/);
+    // "incomplete" = nothing usable was captured: empty, a bare link, or a stub
+    const incomplete = !body || !!bareUrl || body.length < 40;
+    if (!incomplete) {
+      _activeJdText = body;
       if (jdBody) jdBody.innerHTML = marked.parse(body);
-      const m = content.match(/Captured\s+(\d{4})-?(\d{2})-?(\d{2})/);
+      const m = raw.match(/Captured\s+(\d{4})-?(\d{2})-?(\d{2})/);
       if (jdMeta) jdMeta.textContent = m ? `· captured ${m[1]}-${m[2]}-${m[3]}` : '';
       if (jdSection) jdSection.hidden = false;
     } else {
       _activeJdText = '';
-      if (jdSection) jdSection.hidden = true;
+      const link = bareUrl ? bareUrl[1] : '';
+      if (jdBody) jdBody.innerHTML = `
+        <div class="jd-missing">
+          <p class="jd-missing-msg">⚠ The full job description wasn't captured${link ? ' — only a link was saved' : ''}. ${link ? `<a href="${link}" target="_blank" rel="noopener">Open the posting ↗</a> · ` : ''}Paste the JD text so /prep and /tailor can ground on it.</p>
+          <textarea id="jd-paste-area" class="jd-paste-area" rows="7" placeholder="Paste the full job description here…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="primary btn-sm" id="jd-paste-save" data-name="${name}">Save JD</button>
+            <span id="jd-paste-status" class="hint" style="margin-left:8px"></span>
+          </div>
+        </div>`;
+      if (jdMeta) jdMeta.textContent = '· not captured';
+      if (jdSection) jdSection.hidden = false;
+      if (jdDetails) jdDetails.open = true; // surface the warning without a click
+      const saveBtn = document.getElementById('jd-paste-save');
+      if (saveBtn) saveBtn.addEventListener('click', async () => {
+        const ta = document.getElementById('jd-paste-area');
+        const status = document.getElementById('jd-paste-status');
+        const txt = ((ta && ta.value) || '').trim();
+        if (txt.length < 40) { if (status) { status.style.color = 'var(--red)'; status.textContent = 'Paste the full JD text.'; } return; }
+        saveBtn.disabled = true;
+        try {
+          await api('/api/companies/' + encodeURIComponent(saveBtn.dataset.name) + '/jd', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jd: txt })
+          });
+          await loadCompany(saveBtn.dataset.name);
+        } catch (e) {
+          saveBtn.disabled = false;
+          if (status) { status.style.color = 'var(--red)'; status.textContent = 'Error: ' + e.message; }
+        }
+      });
     }
   } catch(e) {
     _activeJdText = '';
@@ -611,6 +709,12 @@ document.getElementById('company-prep-btn').addEventListener('click', () => {
 });
 
 document.getElementById('companies-refresh').addEventListener('click', loadCompanies);
+
+const companySearchEl = document.getElementById('company-search');
+if (companySearchEl) companySearchEl.addEventListener('input', () => {
+  _companySearch = companySearchEl.value;
+  renderCompanyList();
+});
 
 // Parse edited markdown back into the structured sections object used by buildDocx
 function parseMdToSections(md) {

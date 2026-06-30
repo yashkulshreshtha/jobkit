@@ -238,6 +238,23 @@ p.hint {
 .pl-updated { font-size: 11px; color: var(--muted); }
 .pl-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
 
+/* Stale application flag (Submitted, 30+ days no response) */
+.pl-row.is-stale { border-color: rgba(214,158,46,.45); }
+.pl-stale {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 6px; font-size: 11.5px; font-weight: 600;
+  color: var(--amber, #b7791f);
+}
+.pl-close-btn {
+  font: inherit; font-size: 11px; font-weight: 600;
+  padding: 2px 9px; border-radius: 999px; cursor: pointer;
+  color: var(--amber, #b7791f); background: transparent;
+  border: 1px solid rgba(214,158,46,.5);
+  transition: background .15s, color .15s;
+}
+.pl-close-btn:hover { background: var(--amber, #b7791f); color: #fff; }
+.pl-close-btn:disabled { opacity: .5; cursor: default; }
+
 /* Job-description panel (Companies tab) */
 .jd-details {
   border: 1px solid var(--border);
@@ -274,6 +291,21 @@ p.hint {
   overflow-y: auto;
   font-size: 13px;
 }
+.jd-missing { padding: 4px 2px; }
+.jd-missing-msg {
+  font-size: 12.5px; color: var(--amber, #d97706);
+  background: var(--amber-dim, rgba(217,119,6,.1));
+  border: 1px solid rgba(217,119,6,.3); border-radius: var(--radius-sm);
+  padding: 8px 11px; margin: 0 0 10px;
+}
+.jd-missing-msg a { color: var(--accent); font-weight: 600; }
+.jd-paste-area {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  padding: 9px 11px; font: inherit; font-size: 12.5px; line-height: 1.5;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+}
+.jd-paste-area:focus { outline: none; border-color: var(--accent); }
 
 .stage-badge {
   padding: 3px 10px;
@@ -583,25 +615,57 @@ button.ghost:hover { background: var(--surface-2); color: var(--text); }
   border: 1px solid rgba(7,151,106,.28);
 }
 
-.co-list { display: flex; flex-direction: column; gap: 8px; }
+/* Companies tab: master–detail (sidebar list + detail pane) */
+.co-layout { display: flex; gap: 22px; align-items: flex-start; }
+.co-sidebar {
+  flex: 0 0 248px;
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 120px);
+}
+.co-search {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  flex-shrink: 0;
+}
+.co-search:focus { outline: none; border-color: var(--accent); }
+.co-detail { flex: 1; min-width: 0; }
+
+.co-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 4px; }
 
 .co-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 16px;
+  gap: 8px;
+  padding: 9px 11px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: border-color .15s, box-shadow .15s, transform .15s;
+  transition: border-color .12s, background .12s;
 }
-.co-card:hover  { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px); }
-.co-card.active { border-color: var(--accent); background: var(--accent-dim); }
-.co-card-name { font-weight: 600; font-size: 14px; }
-.co-card-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.co-card-arrow { color: var(--muted); flex-shrink: 0; }
+.co-card:hover  { border-color: var(--accent); background: var(--accent-dim); }
+.co-card.active { border-color: var(--accent); background: var(--accent-dim); box-shadow: inset 2px 0 0 var(--accent); }
+.co-card-name { font-weight: 600; font-size: 13px; line-height: 1.25; }
+.co-card-sub  { display: none; }
+.co-card-arrow { display: none; }
+.co-card-stage { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; white-space: nowrap; }
+.co-empty { font-size: 12.5px; color: var(--muted); padding: 8px 4px; }
+
+@media (max-width: 760px) {
+  .co-layout { flex-direction: column; }
+  .co-sidebar { position: static; flex-basis: auto; width: 100%; max-height: 260px; }
+  .co-list { max-height: 200px; }
+}
 
 /* ── UPLOAD SENT RESUME ──────────────────── */
 .file-pick-label {
