@@ -1130,8 +1130,15 @@ document.getElementById('match-run').addEventListener('click', async () => {
 
     const sb = document.getElementById('match-score');
     if (d.score !== null && d.score !== undefined) {
-      sb.textContent = 'Match ' + d.score + '%';
-      sb.className = 'ats-badge ' + (d.score >= 80 ? 'green' : d.score >= 60 ? 'amber' : 'red');
+      // Same deterministic engine + thresholds as the Tailor tab's ATS badge, but
+      // measured against the base resumes — so this reads as "coverage before tailoring".
+      sb.textContent = 'ATS ' + d.score + '% base';
+      sb.className = 'ats-badge ' + (d.score >= 85 ? 'green' : d.score >= 70 ? 'amber' : 'red');
+      if (d.ats && d.ats.missing) {
+        sb.title = 'Base-resume coverage — matched ' + (d.ats.matched ? d.ats.matched.length : 0) +
+          '/' + d.ats.keyword_count + ' JD keywords before tailoring.' +
+          (d.ats.missing.length ? ' Tailoring should add: ' + d.ats.missing.slice(0, 12).join(', ') : '');
+      }
       sb.hidden = false;
     } else sb.hidden = true;
 

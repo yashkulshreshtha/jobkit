@@ -590,6 +590,24 @@ async function extractResumeText(buf, ext) {
   return '';
 }
 
+// Text of the base resumes (em + qa), cached for the process lifetime — they change
+// rarely. Used by Check Match to score a JD against your off-the-shelf material with
+// the SAME deterministic engine the Tailor tab uses on the tailored draft, so the two
+// tabs report the same kind of number (baseline coverage vs tailored coverage).
+let _baseResumeTextCache = null;
+async function getBaseResumeText() {
+  if (_baseResumeTextCache != null) return _baseResumeTextCache;
+  const parts = [];
+  for (const f of ['resume-em.pdf', 'resume-qa.pdf']) {
+    try {
+      const buf = await fs.readFile(path.join(ROOT, 'resumes', f));
+      parts.push(await extractResumeText(buf, 'pdf'));
+    } catch (_) { /* base resume missing → skip it */ }
+  }
+  _baseResumeTextCache = parts.join('\n');
+  return _baseResumeTextCache;
+}
+
 function upsertPipelineRow(pipelineContent, name, role, stage, today) {
   // On an existing row, sync role + stage + the "Updated" date. This is what keeps a
   // second application to the SAME company from leaving a stale role behind: when the
@@ -870,12 +888,15 @@ app.post('/api/match', async (req, res) => {
     const jd = (req.body.jd || '').trim();
     if (!jd) return res.status(400).json({ error: 'jd required' });
     const out = await runClaude('/tailor-analyse ' + jd);
-    // parse the machine-readable summary, then strip it from the displayed output
-    const m = out.match(/<!--\s*MATCH:\s*verdict=(APPLY|MAYBE|SKIP)\s+score=(\d{1,3})\s*-->/i);
+    // Verdict (APPLY/MAYBE/SKIP) stays an LLM judgement; the ATS score does NOT — it's
+    // the same deterministic keyword-coverage engine as the Tailor tab, run here against
+    // the base resumes so both tabs report a consistent, reproducible number.
+    const m = out.match(/<!--\s*MATCH:\s*verdict=(APPLY|MAYBE|SKIP)\s+score=\d{1,3}\s*-->/i);
     const verdict = m ? m[1].toUpperCase() : null;
-    const score = m ? Math.min(100, parseInt(m[2], 10)) : null;
     const output = out.replace(/<!--\s*MATCH:[\s\S]*?-->/i, '').trim();
-    res.json({ output, verdict, score });
+    const ats = computeAtsScore(jd, await getBaseResumeText());
+    const score = ats ? ats.score : null;
+    res.json({ output, verdict, score, ats });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
