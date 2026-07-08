@@ -214,8 +214,13 @@ const SKILLS = [
 // plural-tolerant matching. Boundaries = not flanked by [a-z0-9], so ".net" still
 // matches inside "c#/.net" and "go" won't match inside "google".
 function boundaryRe(alias) {
-  const esc = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp('(?<![a-z0-9])' + esc + '(?![a-z0-9])', 'g');
+  // Split on space/hyphen and rejoin with a flexible [ -]+ separator so a term
+  // matches whether the resume writes it spaced or hyphenated ("code quality" ==
+  // "code-quality", "test automation" == "test-automation") — as a real ATS does.
+  const body = alias.split(/[ -]+/)
+    .map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('[ -]+');
+  return new RegExp('(?<![a-z0-9])' + body + '(?![a-z0-9])', 'g');
 }
 function aliasVariants(alias) {
   const v = new Set([alias]);
