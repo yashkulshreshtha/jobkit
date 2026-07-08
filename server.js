@@ -18,7 +18,8 @@ app.use(express.static('public'));
 // --- helpers ---------------------------------------------------------------
 function runClaude(prompt, timeoutMs = 480000) {
   return new Promise((resolve, reject) => {
-    const args = ['-p', '--dangerously-skip-permissions', prompt];
+    const model = process.env.JOBKIT_CLAUDE_MODEL || 'haiku';
+    const args = ['-p', '--model', model, '--dangerously-skip-permissions', prompt];
     const proc = spawn('claude', args, { cwd: ROOT, env: process.env });
     let out = '', err = '';
     const timer = setTimeout(() => {
