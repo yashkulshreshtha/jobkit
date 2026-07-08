@@ -491,6 +491,20 @@ async function loadCompany(name) {
     companyContent = content || '';
     if (view) view.innerHTML = marked.parse(companyContent);
     if (editArea) editArea.value = companyContent;
+    // Current-application summary: role + stage from the top-level fields, plus a count
+    // of how many applications this company holds (so a 2nd application reads clearly).
+    const sub = document.getElementById('company-detail-sub');
+    if (sub) {
+      const role  = (companyContent.match(/^- Role:\s*(.+)$/m)  || [])[1];
+      const stage = (companyContent.match(/^- Stage:\s*(.+)$/m) || [])[1];
+      const appCount = (companyContent.match(/^### \d{4}-\d{2}-\d{2} /gm) || []).length;
+      const parts = [];
+      if (role) parts.push(`<span class="co-sub-role">${role.trim()}</span>`);
+      if (stage) parts.push(`<span class="stage-badge ${stageBadgeClass(stage)}">${stage.trim()}</span>`);
+      if (appCount > 1) parts.push(`<span class="co-sub-count">${appCount} applications</span>`);
+      sub.innerHTML = parts.join(' ');
+      sub.hidden = !parts.length;
+    }
   } catch(e) {
     if (view) view.textContent = 'Could not load company file: ' + e.message;
     return;

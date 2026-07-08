@@ -591,8 +591,15 @@ async function extractResumeText(buf, ext) {
 }
 
 function upsertPipelineRow(pipelineContent, name, role, stage, today) {
-  const updated = updatePipelineStage(pipelineContent, name, stage);
-  if (updated !== pipelineContent) return updated; // found and updated existing row
+  // On an existing row, sync role + stage + the "Updated" date. This is what keeps a
+  // second application to the SAME company from leaving a stale role behind: when the
+  // current application changes (e.g. Operations Lead -> Engineering Manager), the row
+  // now reflects the new role, not just the new stage. Presence is checked explicitly —
+  // NOT by diffing the update result — because a same-values re-submit is a no-op update
+  // and must still count as "found" (otherwise it would insert a duplicate row).
+  if (pipelineHasRow(pipelineContent, name)) {
+    return updatePipelineRow(pipelineContent, name, { role, stage, updated: today });
+  }
 
   // company not in pipeline — add a new row.
   // Pipe chars in a value would break the markdown table columns (e.g. German
@@ -610,26 +617,160 @@ function upsertPipelineRow(pipelineContent, name, role, stage, today) {
   return lines.join('\n');
 }
 
-function updatePipelineStage(pipelineContent, name, newStage) {
+// True if the pipeline table already has a row for this company (substring match on the
+// Company cell). Used to decide insert-vs-update without relying on a content diff.
+function pipelineHasRow(pipelineContent, name) {
+  const nameVariant = name.replace(/-/g, ' ').toLowerCase();
   const pLines = pipelineContent.split('\n');
   const headerLine = pLines.find(l => l.startsWith('|') && !/^\|[-\s:|]+\|/.test(l) && l.toLowerCase().includes('stage'));
-  let companyColIdx = -1, stageColIdx = -1;
+  let companyColIdx = -1;
+  if (headerLine) companyColIdx = headerLine.split('|').findIndex(c => c.trim().toLowerCase() === 'company');
+  return pLines.some(line => {
+    if (!line.startsWith('|') || /^\|[-\s:|]+\|/.test(line)) return false;
+    const cols = line.split('|');
+    const colToCheck = companyColIdx >= 0 ? (cols[companyColIdx] || '') : (cols[1] || '');
+    return colToCheck.trim().toLowerCase().includes(nameVariant);
+  });
+}
+
+// Update any subset of the role / stage / updated cells on an existing company row.
+// Returns the content unchanged if the company isn't in the table. Keyed by a
+// substring match on the Company cell (same convention as the old updatePipelineStage).
+function updatePipelineRow(pipelineContent, name, { role, stage, updated } = {}) {
+  const pLines = pipelineContent.split('\n');
+  const headerLine = pLines.find(l => l.startsWith('|') && !/^\|[-\s:|]+\|/.test(l) && l.toLowerCase().includes('stage'));
+  let companyColIdx = -1, roleColIdx = -1, stageColIdx = -1, updatedColIdx = -1;
   if (headerLine) {
     const hCols = headerLine.split('|');
     companyColIdx = hCols.findIndex(c => c.trim().toLowerCase() === 'company');
+    roleColIdx    = hCols.findIndex(c => c.trim().toLowerCase() === 'role');
     stageColIdx   = hCols.findIndex(c => c.trim().toLowerCase() === 'stage');
+    updatedColIdx = hCols.findIndex(c => c.trim().toLowerCase() === 'updated');
   }
+  const cell = v => String(v).replace(/\|/g, '/').trim();
   const nameVariant = name.replace(/-/g, ' ').toLowerCase();
   return pLines.map(line => {
     if (!line.startsWith('|') || /^\|[-\s:|]+\|/.test(line)) return line;
     const cols = line.split('|');
     const colToCheck = companyColIdx >= 0 ? (cols[companyColIdx] || '') : (cols[1] || '');
-    if (stageColIdx >= 0 && colToCheck.trim().toLowerCase().includes(nameVariant)) {
-      cols[stageColIdx] = ' ' + newStage + ' ';
-      return cols.join('|');
-    }
-    return line;
+    if (!colToCheck.trim().toLowerCase().includes(nameVariant)) return line;
+    if (stage   != null && stageColIdx   >= 0) cols[stageColIdx]   = ' ' + cell(stage) + ' ';
+    if (role    != null && roleColIdx    >= 0) cols[roleColIdx]    = ' ' + cell(role) + ' ';
+    if (updated != null && updatedColIdx >= 0) cols[updatedColIdx] = ' ' + cell(updated) + ' ';
+    return cols.join('|');
   }).join('\n');
+}
+
+// Back-compat shim: stage-only update (used by the tailor-stub presence probe and /close).
+function updatePipelineStage(pipelineContent, name, newStage) {
+  return updatePipelineRow(pipelineContent, name, { stage: newStage });
+}
+
+// Maintain the "## Applications" history inside a company file and sync the top-level
+// Stage / Role / Resume-used to the current (latest) application. Applications are keyed
+// by DATE: re-recording the same date updates that entry; a new date inserts a fresh
+// block at the top. This is what lets one company hold several applications without the
+// single-valued header fields going stale or ambiguous.
+function recordApplication(content, opts) {
+  const date  = opts.date;
+  const role  = (opts.role  || 'Role').trim();
+  const stage = (opts.stage || 'Submitted').trim();
+
+  // Seed a header if the file is new/empty and we know the company — so the top-level
+  // fields below have an H1 to anchor under (register-as-sent on a company with no file).
+  if (opts.company && !/^#\s+/m.test(content)) {
+    const title = opts.company.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    content = `# ${title}\n\n${content.replace(/^\n+/, '')}`;
+  }
+
+  const atsVal = (opts.ats == null || opts.ats === '') ? ''
+    : (opts.ats === '?' ? '?' : String(opts.ats).replace(/%$/, '') + '%');
+  const fields = [];
+  if (opts.resume) fields.push(`- Resume: ${opts.resume}`);
+  if (opts.jd)     fields.push(`- JD: ${opts.jd}`);
+  if (atsVal)      fields.push(`- ATS: ${atsVal}`);
+  fields.push(`- Outcome: ${opts.outcome || 'pending'}`);
+  const newBlockLines = [`### ${date} — ${role} — ${stage}`, ...fields];
+
+  let lines = content.split('\n');
+
+  // ensure an "## Applications" section exists (before Process log if present)
+  let appIdx = lines.findIndex(l => /^##\s+Applications\s*$/.test(l));
+  if (appIdx === -1) {
+    const procIdx = lines.findIndex(l => /^##\s+Process log/i.test(l));
+    if (procIdx === -1) { lines.push('', '## Applications', ''); appIdx = lines.length - 2; }
+    else { lines.splice(procIdx, 0, '## Applications', '', ''); appIdx = procIdx; }
+  }
+
+  // section body runs from just after the heading to the next "## "
+  let end = lines.length;
+  for (let i = appIdx + 1; i < lines.length; i++) { if (/^##\s+/.test(lines[i])) { end = i; break; } }
+  let body = lines.slice(appIdx + 1, end);
+
+  const blockStarts = [];
+  body.forEach((l, i) => { if (/^###\s+/.test(l)) blockStarts.push(i); });
+  const dateOf = header => (header.replace(/^###\s+/, '').split(' — ')[0] || '').trim();
+
+  let replaced = false;
+  for (let b = 0; b < blockStarts.length; b++) {
+    const start = blockStarts[b];
+    const bEnd  = (b + 1 < blockStarts.length) ? blockStarts[b + 1] : body.length;
+    if (dateOf(body[start]) === date) {
+      // trim trailing blanks that belonged to the old block, keep one separator
+      let sliceEnd = bEnd;
+      while (sliceEnd > start + 1 && body[sliceEnd - 1].trim() === '') sliceEnd--;
+      body.splice(start, sliceEnd - start, ...newBlockLines);
+      replaced = true;
+      break;
+    }
+  }
+  if (!replaced) {
+    let insertPos = 0;
+    while (insertPos < body.length && body[insertPos].trim() === '') insertPos++;
+    body.splice(insertPos, 0, ...newBlockLines, '');
+  }
+
+  lines = [...lines.slice(0, appIdx + 1), ...body, ...lines.slice(end)];
+  content = lines.join('\n');
+
+  // sync top-level fields (replace in place, else insert after the given anchor, else
+  // after the H1, else at the very top — so even a header-less file gets valid top matter).
+  const setField = (c, key, val, afterRe) => {
+    const lineRe = new RegExp(`^- ${key}:.*$`, 'm');
+    if (lineRe.test(c)) return c.replace(lineRe, `- ${key}: ${val}`);
+    if (afterRe && afterRe.test(c)) return c.replace(afterRe, m => `${m}\n- ${key}: ${val}`);
+    if (/^#[^\n]*\n/.test(c)) return c.replace(/^(#[^\n]*\n)/, `$1\n- ${key}: ${val}\n`);
+    return `- ${key}: ${val}\n` + c;
+  };
+  content = setField(content, 'Stage', stage, null);
+  content = setField(content, 'Role', role, /^- Stage:.*$/m);
+  if (opts.resume) content = setField(content, 'Resume used', opts.resume, /^- Role:.*$/m);
+  return content;
+}
+
+// Mark the current (top-most) application block Closed/rejected and set its Outcome,
+// so a company's history reflects the real result of its latest application.
+function closeCurrentApplication(content, stage, outcome) {
+  const lines = content.split('\n');
+  const appIdx = lines.findIndex(l => /^##\s+Applications\s*$/.test(l));
+  if (appIdx === -1) return content;
+  let end = lines.length;
+  for (let i = appIdx + 1; i < lines.length; i++) { if (/^##\s+/.test(lines[i])) { end = i; break; } }
+  const startRel = lines.slice(appIdx + 1, end).findIndex(l => /^###\s+/.test(l));
+  if (startRel === -1) return content;
+  const hIdx = appIdx + 1 + startRel;
+  // header: "### <date> — <role> — <stage>" → replace the stage segment
+  const parts = lines[hIdx].replace(/^###\s+/, '').split(' — ');
+  if (parts.length >= 2) { parts[parts.length - 1] = stage; lines[hIdx] = '### ' + parts.join(' — '); }
+  // update this block's Outcome line (up to the next block/section)
+  let blockEnd = end;
+  for (let i = hIdx + 1; i < end; i++) { if (/^###\s+/.test(lines[i])) { blockEnd = i; break; } }
+  let touched = false;
+  for (let i = hIdx + 1; i < blockEnd; i++) {
+    if (/^- Outcome:/.test(lines[i])) { lines[i] = `- Outcome: ${outcome}`; touched = true; break; }
+  }
+  if (!touched) lines.splice(blockEnd, 0, `- Outcome: ${outcome}`);
+  return lines.join('\n');
 }
 
 // Best-effort "date applied" for a company, read from its companies/<slug>.md.
@@ -894,12 +1035,11 @@ app.post('/api/mark-sent', async (req, res) => {
     if (content.includes('## Process log')) {
       content = content.replace(/## Process log\n/, '## Process log\n' + logEntry + '\n');
     }
-    if (content.match(/^- Stage:/m)) {
-      content = content.replace(/^(- Stage:.*)/m, '- Stage: Submitted');
-    }
-    if (content.match(/^- Resume used:/m)) {
-      content = content.replace(/^- Resume used:.*/m, '- Resume used: ' + filename);
-    }
+    // record/refresh this application in the "## Applications" history and sync the
+    // top-level Stage/Role/Resume-used to it (handles 2nd+ applications to one company).
+    content = recordApplication(content, {
+      company, date, role: jd_title, stage: 'Submitted', resume: filename, ats: ats_score,
+    });
     await fs.writeFile(coPath, content);
     const pipelinePath = path.join(ROOT, 'pipeline.md');
     let pipeline = await fs.readFile(pipelinePath, 'utf8');
@@ -928,6 +1068,8 @@ app.post('/api/companies/:name/close', async (req, res) => {
     if (content.match(/^- Stage:/m)) {
       content = content.replace(/^(- Stage:.*)/m, `- Stage: ${closedStage}`);
     }
+    // also stamp the current application's history block with the closed stage + outcome
+    content = closeCurrentApplication(content, closedStage, out);
     if (content.includes('## Process log')) {
       content = content.replace(/## Process log\n/, `## Process log\n${entry}\n`);
     }
@@ -1099,14 +1241,33 @@ app.post('/api/run', async (req, res) => {
             resumeData.sections = serverParseMd(mdContent);
           } catch (e) { console.error('[/api/run] md move error:', e.message); }
         }
-        // auto-create company file if it doesn't exist yet
+        // auto-create company file if it doesn't exist yet; otherwise, if this tailor is for a
+        // DIFFERENT role than the company's current one, record it as a new (Tailored) application.
         const coFile = path.join(ROOT, 'companies', resumeData.slug + '.md');
+        const draftName = `resume-${resumeData.slug}-${resumeData.date}.docx`;
+        const appOpts = {
+          date: resumeData.date, role: resumeData.jd_title || 'Role', stage: 'Tailored',
+          resume: draftName, jd: `jd-${resumeData.date}.md`, outcome: 'not yet submitted',
+        };
+        let coExists = true;
+        try { await fs.access(coFile); } catch (e) { coExists = false; }
         try {
-          await fs.access(coFile);
-        } catch (e) {
-          const stub = `# ${resumeData.slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} — ${resumeData.jd_title || 'Role'}\n\n- Stage: Tailored\n- Resume used: resume-${resumeData.slug}-${resumeData.date}.docx\n\n## Process log\n\n## Resumes sent\n`;
-          await fs.writeFile(coFile, stub);
-        }
+          if (!coExists) {
+            const title = resumeData.slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            let stub = `# ${title}\n\n- Stage: Tailored\n- Role: ${resumeData.jd_title || 'Role'}\n\n## Applications\n\n## Process log\n\n## Resumes sent\n`;
+            await fs.writeFile(coFile, recordApplication(stub, appOpts));
+          } else {
+            const cur = await fs.readFile(coFile, 'utf8');
+            const m = cur.match(/^- Role:\s*(.+)$/m);
+            const curRole = m ? m[1].trim().toLowerCase() : '';
+            const newRole = (resumeData.jd_title || '').trim().toLowerCase();
+            // Only when the current role is known AND differs — a new application is beginning.
+            // Same-role re-tailors leave the file (and any Submitted stage) untouched.
+            if (curRole && newRole && curRole !== newRole) {
+              await fs.writeFile(coFile, recordApplication(cur, appOpts));
+            }
+          }
+        } catch (e) { console.error('[/api/run] company-file application record error:', e.message); }
         // show tailored-but-unsent resumes in the pipeline too — but only INSERT when the company is
         // not already there, so a re-tailor never downgrades an existing Submitted/Interview row.
         try {
@@ -1283,6 +1444,37 @@ app.post('/api/upload-sent', async (req, res) => {
       );
     } catch (e) {}
 
+    // If a submitted file with this name already exists from a PRIOR application, archive it
+    // instead of overwriting — otherwise the earlier application's submitted resume is lost
+    // (this is the bug that ate idealo's Operations Lead PDF). "Prior application" = the
+    // existing file is from another day, or the company's current role differs from this JD.
+    try {
+      const target = path.join(coDir, safeFname);
+      const prev = await fs.stat(target).catch(() => null);
+      if (prev) {
+        const prevDate = new Date(prev.mtime).toISOString().slice(0, 10);
+        let roleChanged = false;
+        try {
+          const cur = await fs.readFile(path.join(ROOT, 'companies', company + '.md'), 'utf8');
+          const m = cur.match(/^- Role:\s*(.+)$/m);
+          if (m && jd_title && m[1].trim().toLowerCase() !== String(jd_title).trim().toLowerCase()) roleChanged = true;
+        } catch (e) {}
+        if (prevDate !== usedDate || roleChanged) {
+          const archiveDir = path.join(coDir, 'archive');
+          await fs.mkdir(archiveDir, { recursive: true });
+          const suffix = prevDate.replace(/-/g, '');
+          const withSuffix = n => n.replace(/(\.[^.]+)$/, `-${suffix}$1`);
+          await fs.rename(target, path.join(archiveDir, withSuffix(safeFname))).catch(() => {});
+          const mdName = safeFname.replace(/\.(docx|pdf)$/i, '.md');
+          if (mdName !== safeFname) {
+            const mdTarget = path.join(coDir, mdName);
+            if (await fs.stat(mdTarget).catch(() => null))
+              await fs.rename(mdTarget, path.join(archiveDir, withSuffix(mdName))).catch(() => {});
+          }
+        }
+      }
+    } catch (e) { console.error('[upload-sent] archive error:', e.message); }
+
     await fs.writeFile(path.join(coDir, safeFname), buf);
 
     // extract text from DOCX/PDF and save as canonical .md — fast, no Claude needed.
@@ -1314,13 +1506,11 @@ app.post('/api/upload-sent', async (req, res) => {
     if (content.includes('## Process log')) {
       content = content.replace(/## Process log\n/, '## Process log\n' + logEntry + '\n');
     }
-    if (content.match(/^- Stage:/m)) {
-      content = content.replace(/^(- Stage:.*)/m, '- Stage: Submitted');
-    }
-    // point "Resume used:" at the file actually submitted (uploaded separately, usually a PDF)
-    if (content.match(/^- Resume used:/m)) {
-      content = content.replace(/^- Resume used:.*/m, '- Resume used: ' + safeFname);
-    }
+    // record/refresh this application in "## Applications" and sync the top-level
+    // Stage/Role/Resume-used (the submitted file, usually a PDF) to it.
+    content = recordApplication(content, {
+      company, date: usedDate, role: jd_title, stage: 'Submitted', resume: safeFname, ats: ats_score,
+    });
     await fs.writeFile(coPath, content);
 
     const pipelinePath = path.join(ROOT, 'pipeline.md');

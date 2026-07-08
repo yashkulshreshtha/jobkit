@@ -638,6 +638,10 @@ button.ghost:hover { background: var(--surface-2); color: var(--text); }
 }
 .co-search:focus { outline: none; border-color: var(--accent); }
 .co-detail { flex: 1; min-width: 0; }
+.co-detail-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.co-detail-sub[hidden] { display: none; }
+.co-sub-role { font-size: 13px; font-weight: 600; color: var(--muted); }
+.co-sub-count { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--chip-bg, rgba(124,58,237,.10)); border-radius: 999px; padding: 1px 8px; }
 
 .co-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; padding-right: 4px; }
 

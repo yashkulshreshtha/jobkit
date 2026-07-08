@@ -258,11 +258,14 @@ some candidates prefer not to raise notice unless asked).
 Save as output/cover-letter-<slug>-<YYYYMMDD>.md
 Output: <!-- SAVED_CL: output/cover-letter-<slug>-<YYYYMMDD>.md -->
 
-STEP 11 — BANK THE KNOWN FACTS (only if a KNOWN_FACTS block was supplied)
-For each user-supplied fact that you actually used in the resume, note it. After the deliverables,
-list them under "New facts to bank:" and ask in one line whether to append them to the CLAUDE.md
-achievement bank so they're reused next time. Do not append without confirmation. (This is the one
-permitted closing question — it exists because banking the fact is the whole point of the feature.)
+STEP 11 — SURFACE NEW FACTS (only if a KNOWN_FACTS block was supplied)
+For each user-supplied fact that you actually used in the resume and that is NOT already in the
+CLAUDE.md achievement bank, note it. After the deliverables, list them under a heading
+"New facts detected (not yet banked):" as a plain bulleted list — one line each.
+Do NOT ask a yes/no question and do NOT append to the bank here: the Tailor tab is not a chat, so a
+closing question has nowhere to be answered (see the no-closing-questions rule below). Instead, end the
+list with one flat statement: "To reuse these in future tailors, say 'bank these facts' in chat and
+they'll be appended to the achievement bank." Banking is a separate, explicit action — never automatic.
 
 After completing all steps, end with the deliverables and a one-line summary of what was produced.
 Do not end by asking what to do next. If companies/<slug>.md exists, note in one line that /prep is
