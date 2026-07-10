@@ -719,7 +719,14 @@ document.getElementById('company-prep-btn').addEventListener('click', () => {
     const opt = Array.from(prepSelect.options).find(o => o.value === name);
     if (opt) prepSelect.value = name;
   }
-  document.getElementById('prep-round').focus();
+  // Prefill the round from the company's current pipeline stage so a prep driven by a
+  // recent update (e.g. an interview invite) is one click + Run, not a blank box.
+  const roundEl = document.getElementById('prep-round');
+  if (roundEl && !roundEl.value.trim()) {
+    const stage = companyStage(name);
+    if (stage) roundEl.value = stage;
+  }
+  roundEl.focus();
 });
 
 document.getElementById('companies-refresh').addEventListener('click', loadCompanies);
@@ -922,8 +929,23 @@ document.getElementById('resume-cancel-edit-btn').addEventListener('click', () =
 });
 
 // Command runners
-async function runCommand({ url, body, outId, outRawId, wrapId, busyLabel, onResult }) {
+async function runCommand({ url, body, outId, outRawId, wrapId, busyLabel, onResult, progress }) {
   if (busy) return;
+  // Optional in-panel progress bar so a long Claude call doesn't look dead (user might
+  // navigate away thinking it's stuck). Cycles through stage labels on a timer.
+  let progTimer = null;
+  const progBar = progress && document.getElementById(progress.barId);
+  const progTxt = progress && document.getElementById(progress.textId);
+  if (progBar) {
+    const stages = progress.stages || ['Working…'];
+    let si = 0;
+    progBar.hidden = false;
+    if (progTxt) progTxt.textContent = stages[0];
+    progTimer = setInterval(() => {
+      si = Math.min(si + 1, stages.length - 1);
+      if (progTxt) progTxt.textContent = stages[si];
+    }, progress.intervalMs || 20000);
+  }
   try {
     setBusy(true, busyLabel || 'running…');
     const data = await api(url, {
@@ -937,7 +959,11 @@ async function runCommand({ url, body, outId, outRawId, wrapId, busyLabel, onRes
     await loadPipeline();
     await loadCompanies();
   } catch (e) { setStatus('Error: ' + e.message, 'error'); }
-  finally { setBusy(false); stopProgress(); }
+  finally {
+    setBusy(false); stopProgress();
+    if (progTimer) clearInterval(progTimer);
+    if (progBar) progBar.hidden = true;
+  }
 }
 
 function parseATSScore(text) {
@@ -1312,12 +1338,25 @@ document.getElementById('tailor-run').addEventListener('click', async () => {
 $('#prep-run').addEventListener('click', () => {
   const company = $('#prep-company').value;
   const round = $('#prep-round').value.trim();
-  if (!company || !round) return setStatus('Pick a company and a round', 'error');
+  if (!company || !round) {
+    setStatus('Pick a company and a round', 'error');
+    // The status dot alone is easy to miss — flag the round field visibly so the click
+    // doesn't feel like a no-op.
+    const r = $('#prep-round');
+    if (r) { r.focus(); r.classList.add('field-error'); setTimeout(() => r.classList.remove('field-error'), 1500); }
+    return;
+  }
   const dl = document.getElementById('prep-dl');
   if (dl) dl.hidden = true;
   runCommand({ url: '/api/prep', body: { company, round },
     outId: '#prep-out', outRawId: '#prep-out-raw',
     wrapId: '#prep-out-wrap', busyLabel: 'prepping…',
+    progress: {
+      barId: 'prep-progress', textId: 'prep-progress-text', intervalMs: 20000,
+      stages: ['Reading the company notes & JD…', 'Pulling interview lessons…',
+        'Mapping your experience to the round…', 'Drafting the prep pack…',
+        'Almost there — formatting…'],
+    },
     onResult: (data) => {
       if (dl && data.prep_file) {
         const parts = data.prep_file.split('/');

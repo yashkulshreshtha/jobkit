@@ -97,6 +97,7 @@ header {
 }
 .status-dot.error { background: var(--red); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.field-error { border-color: var(--red) !important; box-shadow: 0 0 0 3px var(--red-dim); }
 
 /* ── LAYOUT ─────────────────────────────── */
 main { max-width: 1020px; margin: 0 auto; padding: 32px 24px 80px; }

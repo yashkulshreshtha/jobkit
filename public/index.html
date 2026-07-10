@@ -132,6 +132,10 @@
     <label>Round / focus (e.g. "system design", "hiring manager round")</label>
     <input id="prep-round" type="text" />
     <div class="row"><button class="primary" id="prep-run">Run /prep</button></div>
+    <div class="progress-bar" id="prep-progress" hidden>
+      <div class="progress-spinner"></div>
+      <span id="prep-progress-text">Reading the company notes & JD…</span>
+    </div>
     <div class="output-block" id="prep-out-wrap" hidden>
       <div class="row"><h3>Output</h3>
         <button class="ghost" data-copy="prep-out-raw">Copy</button>
