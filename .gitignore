@@ -10,10 +10,8 @@ node_modules/
 .env.*
 .claude/settings.local.json
 
-# personal data — kept OUT of the shared code repo (backed up separately, per-person)
-/CLAUDE.md
-/pipeline.md
-/companies/
-/output/
-/resumes/
-/fabrication-patterns.json
+# Personal data (CLAUDE.md, pipeline.md, companies/, output/, resumes/,
+# fabrication-patterns.json) is NOT listed here on purpose. This working tree is
+# shared with a second repo (jobkit-data, git-dir ~/jobkit-data.git) that DOES track
+# those files; a pattern here would also be read by that repo and block it from adding
+# new data files. The public code repo ignores them via .git/info/exclude instead.
