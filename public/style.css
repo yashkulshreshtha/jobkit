@@ -163,6 +163,15 @@ p.hint {
 }
 .pl-strategy strong { color: var(--accent); font-weight: 600; }
 
+/* ── List + calendar side-by-side ───────────── */
+.pl-split { display: flex; align-items: flex-start; gap: 16px; }
+.pl-split .pl-list { flex: 1 1 auto; min-width: 0; }
+.pl-cal-col { flex: 0 0 344px; position: sticky; top: 16px; }
+@media (max-width: 760px) {
+  .pl-split { flex-direction: column; }
+  .pl-cal-col { flex-basis: auto; width: 100%; position: static; }
+}
+
 /* ── Interview calendar ─────────────────────── */
 .cal {
   background: var(--surface);
@@ -170,7 +179,6 @@ p.hint {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 12px 14px 14px;
-  margin-bottom: 14px;
 }
 .cal-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -188,14 +196,14 @@ p.hint {
 }
 .cal-btn:hover { color: var(--accent); border-color: rgba(109,74,255,.30); background: var(--accent-dim); }
 .cal-today-btn { font-size: 12px; font-weight: 600; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .cal-dow { margin-bottom: 4px; }
 .cal-dowc {
-  text-align: center; font-size: 11px; font-weight: 600;
-  color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 2px 0;
+  text-align: center; font-size: 10.5px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .03em; padding: 2px 0;
 }
 .cal-cell {
-  min-height: 62px; padding: 4px; border-radius: var(--radius-sm);
+  min-height: 56px; padding: 3px; border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle); background: var(--surface-2);
   display: flex; flex-direction: column; gap: 3px;
 }

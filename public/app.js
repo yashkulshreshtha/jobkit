@@ -285,9 +285,6 @@ function renderPipelineView() {
     html += `<div class="pl-strategy">${_pipelineStrategy.replace(/(Jun.?Aug|late Sep[a-z]*)/gi, '<strong>$1</strong>')}</div>`;
   }
 
-  // interview calendar (parsed from the same rows; independent of the filter/search below)
-  html += renderCalendar(rows);
-
   const filters = [['all','All'],['submitted','Submitted'],['screening','Screening'],['interviewing','Interviewing'],['offer','Offers'],['closed','Closed']];
   html += `<div class="pl-controls">
     <div class="pl-filters">${filters.map(([k, label]) =>
@@ -321,6 +318,9 @@ function renderPipelineView() {
     return (b['updated'] || '').localeCompare(a['updated'] || ''); // updated desc
   });
 
+  // list (left) + interview calendar (right) sit side-by-side on wide screens, stack on mobile.
+  // The calendar always renders from the full row set — it's independent of the filter/search above.
+  html += '<div class="pl-split">';
   html += '<div class="pl-list">';
   if (!view.length) html += '<div class="pl-empty">No matches.</div>';
   view.forEach(row => {
@@ -353,7 +353,9 @@ function renderPipelineView() {
       </div>
     </div>`;
   });
-  html += '</div>';
+  html += '</div>';                                          // close .pl-list
+  html += `<aside class="pl-cal-col">${renderCalendar(rows)}</aside>`;
+  html += '</div>';                                          // close .pl-split
 
   if (_pipelineFooter) html += `<div class="pipeline-footer">${_pipelineFooter}</div>`;
 
