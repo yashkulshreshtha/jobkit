@@ -961,7 +961,16 @@ app.post('/api/intake', async (req, res) => {
     const notes = (req.body.notes || '').trim();
     if (!notes) return res.status(400).json({ error: 'notes required' });
     const out = await runClaude('/intake ' + notes);
-    res.json({ output: out });
+
+    // /intake emits a `<!-- LEARN: slug1 slug2 -->` trailer naming companies whose notes carried a real
+    // outcome/feedback. Strip it from the user-facing output, then fire the same background learning loop
+    // the Log tab uses — so pasted rejections/feedback stage lesson proposals for review (Companies tab),
+    // never auto-committing to CLAUDE.md. Slugs are validated; /learn re-reads the just-updated company file.
+    const m = out.match(/<!--\s*LEARN:\s*([^>]*?)-->/i);
+    const learning = m ? [...new Set(m[1].trim().split(/\s+/).filter(s => s && safeName(s)))] : [];
+    const output = out.replace(/<!--\s*LEARN:[\s\S]*?-->/i, '').trim();
+    res.json({ output, learning });
+    learning.forEach(company => learnInBackground(company));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

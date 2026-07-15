@@ -1400,7 +1400,16 @@ $('#intake-run').addEventListener('click', () => {
   const notes = $('#intake-notes').value.trim();
   if (!notes) return setStatus('Paste something first', 'error');
   runCommand({ url: '/api/intake', body: { notes },
-    outId: '#intake-out', wrapId: '#intake-out-wrap', busyLabel: 'ingesting…' });
+    outId: '#intake-out', wrapId: '#intake-out-wrap', busyLabel: 'ingesting…',
+    onResult: (data) => {
+      // Outcome/feedback in the paste → the server fired the learning loop for those companies. It
+      // stages proposals asynchronously; tell the user where to review them (they're not on that tab).
+      const learning = (data && data.learning) || [];
+      if (learning.length) {
+        setStatus('Learning from feedback for ' + learning.join(', ') +
+          ' — review staged lessons in the Companies tab shortly.', 'ok');
+      }
+    } });
 });
 
 // ── SETUP / ONBOARDING ───────────────────────────────────────────────────────
