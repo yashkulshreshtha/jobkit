@@ -356,9 +356,6 @@ function renderPipelineView() {
     return (b['updated'] || '').localeCompare(a['updated'] || ''); // updated desc
   });
 
-  // list (left) + interview calendar (right) sit side-by-side on wide screens, stack on mobile.
-  // The calendar always renders from the full row set — it's independent of the filter/search above.
-  html += '<div class="pl-split">';
   html += '<div class="pl-list">';
   if (!view.length) html += '<div class="pl-empty">No matches.</div>';
   view.forEach(row => {
@@ -392,10 +389,11 @@ function renderPipelineView() {
     </div>`;
   });
   html += '</div>';                                          // close .pl-list
-  html += `<aside class="pl-cal-col">${renderCalendar(rows)}</aside>`;
-  html += '</div>';                                          // close .pl-split
 
   if (_pipelineFooter) html += `<div class="pipeline-footer">${_pipelineFooter}</div>`;
+
+  // interview calendar — full width at the bottom, below the list (independent of filter/search)
+  html += renderCalendar(rows);
 
   container.innerHTML = html;
 
