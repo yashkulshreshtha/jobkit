@@ -2,7 +2,7 @@
 
 <https://polyformproject.org/licenses/noncommercial/1.0.0>
 
-Required Notice: Copyright © 2026 Yash Kulshreshtha (https://github.com/yashkulshreshtha/jobkit)
+Required Notice: Copyright © 2026 Yash Kulshreshtha (https://github.com/yashkrush/jobkit)
 
 ## Acceptance
 
