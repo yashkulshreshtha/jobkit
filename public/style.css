@@ -407,16 +407,6 @@ p.hint {
 .meta-next { color: var(--text); font-weight: 500; }
 .meta-dim { color: var(--muted); }
 
-.pipeline-footer {
-  margin-top: 14px;
-  padding: 10px 14px;
-  background: var(--surface-2);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
 /* ── FORMS ───────────────────────────────── */
 label {
   display: block;

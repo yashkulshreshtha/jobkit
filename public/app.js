@@ -22,7 +22,6 @@ let _progressTimer = null;
 let _resumeMarkdown = null;
 let _pipelineRows = [];
 let _pipelineStrategy = '';
-let _pipelineFooter = '';
 let _pipelineFilter = 'all';
 let _pipelineSort = 'updated';
 let _pipelineSearch = '';
@@ -294,13 +293,8 @@ function renderPipeline(md) {
 
   _pipelineStrategy = lines.slice(0, firstTableIdx)
     .filter(l => l.trim() && !/^#/.test(l.trim())).join(' ').trim();
-  // Footer = only the prose between the table and the first heading after it (the "Discovery" note).
-  // Everything from the first "##" onward (e.g. the "Stage vocabulary" reference) is internal doc for
-  // the markdown file, not UI content — stop there so it isn't dumped as a run-on blob.
-  const afterTable = lines.slice(lastTableIdx + 1);
-  const headingIdx = afterTable.findIndex(l => /^#/.test(l.trim()));
-  _pipelineFooter = (headingIdx === -1 ? afterTable : afterTable.slice(0, headingIdx))
-    .filter(l => l.trim()).join(' ').trim();
+  // Prose after the table (Discovery note, Stage-vocabulary reference) is internal doc for the md
+  // file, not UI content — deliberately not rendered.
   _pipelineRows = rows;
   renderPipelineView();
 }
@@ -396,8 +390,6 @@ function renderPipelineView() {
     </div>`;
   });
   html += '</div>';                                          // close .pl-list
-
-  if (_pipelineFooter) html += `<div class="pipeline-footer">${_pipelineFooter}</div>`;
 
   // interview calendar — full width at the bottom, below the list (independent of filter/search)
   html += renderCalendar(rows);
