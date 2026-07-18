@@ -1,18 +1,29 @@
 ---
 description: Interview prep for a company and round
 ---
-Build a COMPLETE night-before interview prep pack — the kind I read once in full and then re-read
-the core. Match the depth of a real prep pack, not a summary: fully written opener scripts, full
-STAR stories, comparison tables, trade-offs, gap deep-dives with what-to-read, and an A4 cheat
-sheet. This should run several pages. Completeness beats brevity — do NOT truncate stories or
-sections to save space, and do not produce a thin one-pager. Where the doc is long, make it
-navigable with a tiered "how to use this pack" so I can read the core first and drill deeper as
-time allows. "Read twice, not memorise" applies to internalising the opener and stories — it is NOT
-a licence to make the doc short.
+Build a prep pack that's **lean, plain, and right-sized to the round** — substantial enough that I
+walk in confident, short enough that I read it once without fatigue. Every line earns its place: real
+answers I can say out loud, no padding, no ornamental framing. This is the opposite of BOTH a thin
+one-pager AND a bloated multi-page essay — aim for viable and readable. I can only look at the
+interviewer during the call, never at notes, so the pack's job is to prepare my head beforehand, not
+to be glanced at live.
 
-Plain language throughout: short sentences, real answers I can say out loud, no jargon I wouldn't
-use in the room. Ground everything in the documents below — invent nothing, never fabricate
-experience to close a gap; name the gap and handle it honestly.
+**Scale to the round — this matters most:**
+- **Recruiter / screen** — keep it SHORT. It's a warm intro, not a grilling. Just: the opener, 3–4
+  stories, the handful of questions that actually come up, the real gaps, and my questions for them.
+  Drop the optional landscape section; keep the frame and the closing mental-model to a few lines each,
+  not full sections. A recruiter pack should be readable in one short sitting.
+- **Hiring-manager / panel** — a bit fuller: leadership/strategy depth, more stories, the gap deep-dive.
+- **System-design / technical** — use the technical mode below; depth is genuinely the point there.
+
+Right-size, don't stretch or starve: never pad to hit a length, never truncate a real answer to save
+space. Where a pack does run long (technical rounds), make it navigable with a tiered "how to use this
+pack".
+
+**Plain language, no fancy prose.** Short sentences, real answers I'd actually say in the room. No
+ornamental section-dressing ("the identity test of the whole role", "your superpower for this role"),
+no jargon I wouldn't use out loud, EU/British spelling. Ground everything in the documents below —
+invent nothing, never fabricate experience to close a gap; name the gap and handle it honestly.
 
 Company + round (e.g. "paymenttools, recruiter round" or "affinidi, system design"):
 
@@ -49,7 +60,7 @@ Identify the round from the input and the company file, then prep what that roun
 - **Panel / values / cross-functional** — collaboration, stakeholder management, influence.
 Don't prep question types that won't come up in this round.
 
-## Universal pack — produce these sections for every round
+## The sections — scale each to the round (keep them tight; a recruiter round trims hard)
 
 **0. How to use this pack** — a short tiered reading plan by time available (e.g. "2 hours: read
 sections X, Y, Z and say the stories aloud · +1 hour: add the gap section · morning of: re-read the
@@ -68,7 +79,8 @@ true and relevant ones; favour the candidate's signature, high-impact achievemen
 · **What I'd do differently** · **Why it works for this company**. Lead with the strongest. These
 recombine to cover most behavioural questions.
 
-**4. Likely questions — the 10–12 most probable** — cluster by theme (e.g. strategy/vision,
+**4. Likely questions — only the ones that realistically come up in THIS round** (~6–8 for a recruiter
+screen, more for a hiring-manager round) — cluster by theme (e.g. strategy/vision,
 technical depth, leadership, domain, logistics, and a "why this company / why now" wildcard). For
 each: the question, a 1–3 line answer in my voice, and which STAR story to anchor on. Cover every
 question type that realistically comes up in THIS round.
